@@ -13,6 +13,9 @@ import NotFound from './pages/NotFound'
 import AdminLayout from './admin/AdminLayout'
 import AdminProducts from './admin/AdminProducts'
 import AdminProductForm from './admin/AdminProductForm'
+import AdminLogin from './admin/AdminLogin'
+import RequireAuth from './admin/RequireAuth'
+import { AuthProvider } from './context/AuthContext'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -45,6 +48,7 @@ function StoreLayout() {
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthProvider>
       <ProductsProvider>
         <CartProvider>
           <ScrollToTop />
@@ -58,7 +62,15 @@ export default function App() {
               <Route path="*" element={<NotFound />} />
             </Route>
 
-            <Route path="/admin" element={<AdminLayout />}>
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route
+              path="/admin"
+              element={
+                <RequireAuth>
+                  <AdminLayout />
+                </RequireAuth>
+              }
+            >
               <Route index element={<AdminProducts />} />
               <Route path="nuevo" element={<AdminProductForm />} />
               <Route path="editar/:id" element={<KeyedById>{(id) => <AdminProductForm key={id} />}</KeyedById>} />
@@ -66,6 +78,7 @@ export default function App() {
           </Routes>
         </CartProvider>
       </ProductsProvider>
+      </AuthProvider>
     </BrowserRouter>
   )
 }
