@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
-import { BrowserRouter, Route, Routes, useLocation, useParams } from 'react-router-dom'
+import { useEffect, type ReactNode } from 'react'
+import { BrowserRouter, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom'
+import { ProductsProvider } from './context/ProductsContext'
 import { CartProvider } from './context/CartContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -9,6 +10,9 @@ import CategoryPage from './pages/CategoryPage'
 import ProductPage from './pages/ProductPage'
 import CustomOrder from './pages/CustomOrder'
 import NotFound from './pages/NotFound'
+import AdminLayout from './admin/AdminLayout'
+import AdminProducts from './admin/AdminProducts'
+import AdminProductForm from './admin/AdminProductForm'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -18,31 +22,50 @@ function ScrollToTop() {
   return null
 }
 
-// Reinicia el estado (color, cantidad) al pasar de un producto a otro
-function ProductRoute() {
+// Reinicia el estado del componente al cambiar de producto
+function KeyedById({ children }: { children: (id?: string) => ReactNode }) {
   const { id } = useParams()
-  return <ProductPage key={id} />
+  return <>{children(id)}</>
+}
+
+// Diseño de la tienda pública
+function StoreLayout() {
+  return (
+    <>
+      <Navbar />
+      <main>
+        <Outlet />
+      </main>
+      <Footer />
+      <CartDrawer />
+    </>
+  )
 }
 
 export default function App() {
   return (
     <BrowserRouter>
-      <CartProvider>
-        <ScrollToTop />
-        <Navbar />
-        <main>
+      <ProductsProvider>
+        <CartProvider>
+          <ScrollToTop />
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/categoria/:slug" element={<CategoryPage />} />
-            <Route path="/buscar" element={<CategoryPage search />} />
-            <Route path="/producto/:id" element={<ProductRoute />} />
-            <Route path="/personalizado" element={<CustomOrder />} />
-            <Route path="*" element={<NotFound />} />
+            <Route element={<StoreLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/categoria/:slug" element={<CategoryPage />} />
+              <Route path="/buscar" element={<CategoryPage search />} />
+              <Route path="/producto/:id" element={<KeyedById>{(id) => <ProductPage key={id} />}</KeyedById>} />
+              <Route path="/personalizado" element={<CustomOrder />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminProducts />} />
+              <Route path="nuevo" element={<AdminProductForm />} />
+              <Route path="editar/:id" element={<KeyedById>{(id) => <AdminProductForm key={id} />}</KeyedById>} />
+            </Route>
           </Routes>
-        </main>
-        <Footer />
-        <CartDrawer />
-      </CartProvider>
+        </CartProvider>
+      </ProductsProvider>
     </BrowserRouter>
   )
 }

@@ -1,15 +1,15 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { categories, getCategory, products, type Product } from '../data/catalog'
+import { categories, getCategory, MATERIALS, type Product } from '../data/catalog'
+import { useProducts } from '../context/ProductsContext'
 import ProductCard from '../components/ProductCard'
 import NotFound from './NotFound'
 
-const MATERIALS: Product['material'][] = ['PLA', 'PETG', 'TPU', 'Resina']
 
 const sorters: Record<string, { label: string; fn: (a: Product, b: Product) => number }> = {
   relevancia: { label: 'Relevancia', fn: () => 0 },
   nuevos: { label: 'Novedades', fn: (a, b) => Number(!!b.isNew) - Number(!!a.isNew) },
-  populares: { label: 'Más vendidos', fn: (a, b) => Number(!!b.bestSeller) - Number(!!a.bestSeller) || b.rating - a.rating },
+  populares: { label: 'Más vendidos', fn: (a, b) => Number(!!b.bestSeller) - Number(!!a.bestSeller) || (b.rating ?? 0) - (a.rating ?? 0) },
   'precio-asc': { label: 'Precio: menor a mayor', fn: (a, b) => a.price - b.price },
   'precio-desc': { label: 'Precio: mayor a menor', fn: (a, b) => b.price - a.price },
 }
@@ -17,6 +17,7 @@ const sorters: Record<string, { label: string; fn: (a: Product, b: Product) => n
 // Sirve para /categoria/:slug y para /buscar?q=
 export default function CategoryPage({ search = false }: { search?: boolean }) {
   const { slug } = useParams()
+  const { visibleProducts: products } = useProducts()
   const [params, setParams] = useSearchParams()
   const [materials, setMaterials] = useState<string[]>([])
 
@@ -37,7 +38,7 @@ export default function CategoryPage({ search = false }: { search?: boolean }) {
     }
     if (materials.length) result = result.filter((p) => materials.includes(p.material))
     return [...result].sort((sorters[sort] ?? sorters.relevancia).fn)
-  }, [search, query, category, materials, sort])
+  }, [products, search, query, category, materials, sort])
 
   if (!search && !isAll && !category) return <NotFound />
 

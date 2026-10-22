@@ -23,7 +23,11 @@ export default function ProductCard({ product }: { product: Product }) {
         <span className="card-cat">{getCategory(product.category)?.name}</span>
         <Link to={`/producto/${product.id}`} className="card-title">{product.name}</Link>
         <div className="card-meta">
-          <span className="rating"><Icon name="star" size={14} filled /> {product.rating.toFixed(1)}</span>
+          {product.rating ? (
+            <span className="rating"><Icon name="star" size={14} filled /> {product.rating.toFixed(1)}</span>
+          ) : (
+            <span className="muted small">{product.heightCm ? `${product.heightCm} cm` : product.material}</span>
+          )}
           <span className="swatches">
             {product.colors.slice(0, 4).map((c) => (
               <span key={c} className="swatch sm" style={{ background: c }} />

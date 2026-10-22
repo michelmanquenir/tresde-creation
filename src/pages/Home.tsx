@@ -1,14 +1,16 @@
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
-import { categories, products } from '../data/catalog'
+import { categories } from '../data/catalog'
+import { useProducts } from '../context/ProductsContext'
 import Icon from '../components/Icon'
 import ProductCard from '../components/ProductCard'
 import ProductImage from '../components/ProductImage'
 
 export default function Home() {
+  const { visibleProducts: products } = useProducts()
   const newProducts = products.filter((p) => p.isNew).slice(0, 8)
   const bestSellers = products.filter((p) => p.bestSeller).slice(0, 4)
-  const featured = products.find((p) => p.id === 'dragon-articulado') ?? products[0]
+  const featured = products.find((p) => p.bestSeller) ?? products[0]
 
   return (
     <>
@@ -34,13 +36,15 @@ export default function Home() {
               <li><strong>24 colores</strong><span>de filamento</span></li>
             </ul>
           </div>
-          <Link to={`/producto/${featured.id}`} className="hero-visual" aria-label={featured.name}>
-            <ProductImage product={featured} />
-            <div className="hero-chip">
-              <span className="muted small">Destacado</span>
-              <strong>{featured.name}</strong>
-            </div>
-          </Link>
+          {featured && (
+            <Link to={`/producto/${featured.id}`} className="hero-visual" aria-label={featured.name}>
+              <ProductImage product={featured} />
+              <div className="hero-chip">
+                <span className="muted small">Destacado</span>
+                <strong>{featured.name}</strong>
+              </div>
+            </Link>
+          )}
         </div>
       </section>
 

@@ -40,7 +40,8 @@ export default function Footer() {
         </div>
       </div>
       <div className="container footer-bottom muted small">
-        © {YEAR} {STORE_NAME}. Todos los derechos reservados.
+        <span>© {YEAR} {STORE_NAME}. Todos los derechos reservados.</span>
+        <Link to="/admin">Administrar tienda</Link>
       </div>
     </footer>
   )

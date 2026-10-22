@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { formatPrice, getCategory, getProduct, products } from '../data/catalog'
+import { formatPrice, getCategory } from '../data/catalog'
 import { useCart } from '../context/CartContext'
+import { useProducts } from '../context/ProductsContext'
 import Icon from '../components/Icon'
 import ProductCard from '../components/ProductCard'
 import ProductImage from '../components/ProductImage'
@@ -9,16 +10,21 @@ import NotFound from './NotFound'
 
 export default function ProductPage() {
   const { id } = useParams()
+  const { getProduct, visibleProducts } = useProducts()
   const product = getProduct(id)
   // key={id} en App reinicia este estado al cambiar de producto
   const [color, setColor] = useState(product?.colors[0] ?? '')
   const [qty, setQty] = useState(1)
+  const [imageIndex, setImageIndex] = useState(0)
   const { add } = useCart()
 
-  if (!product) return <NotFound />
+  if (!product || product.hidden) return <NotFound />
 
   const category = getCategory(product.category)
-  const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4)
+  const images = product.images ?? []
+  const related = visibleProducts
+    .filter((p) => p.category === product.category && p.id !== product.id)
+    .slice(0, 4)
 
   return (
     <div className="container page">
@@ -28,16 +34,43 @@ export default function ProductPage() {
       </nav>
 
       <div className="pdp">
-        <div className="pdp-media">
-          <ProductImage product={product} color={color} />
+        <div className="pdp-gallery">
+          <div className="pdp-media">
+            <ProductImage product={product} color={color} index={imageIndex} />
+          </div>
+          {images.length > 1 && (
+            <div className="pdp-thumbs">
+              {images.map((src, i) => (
+                <button
+                  key={i}
+                  className={i === imageIndex ? 'active' : ''}
+                  onClick={() => setImageIndex(i)}
+                  aria-label={`Ver foto ${i + 1}`}
+                >
+                  <img src={src} alt="" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="pdp-info">
           <span className="card-cat">{category?.name}</span>
           <h1>{product.name}</h1>
           <div className="rating">
-            <Icon name="star" size={16} filled /> {product.rating.toFixed(1)}
-            <span className="muted small"> · Impresión aprox. {product.printHours} h</span>
+            {product.rating ? (
+              <>
+                <Icon name="star" size={16} filled /> {product.rating.toFixed(1)}
+              </>
+            ) : null}
+            <span className="muted small">
+              {[
+                product.heightCm && `${product.heightCm} cm de alto`,
+                product.printHours && `Impresión aprox. ${product.printHours} h`,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
           </div>
 
           <div className="price lg">

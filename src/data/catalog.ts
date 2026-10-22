@@ -8,6 +8,9 @@ export type Category = {
   hue: number // tono base para las imágenes de relleno
 }
 
+export const MATERIALS = ['PLA', 'PETG', 'Resina', 'TPU'] as const
+export type Material = (typeof MATERIALS)[number]
+
 export type Product = {
   id: string
   name: string
@@ -15,13 +18,15 @@ export type Product = {
   price: number
   oldPrice?: number
   description: string
-  material: 'PLA' | 'PETG' | 'Resina' | 'TPU'
+  material: Material
   colors: string[] // hex
-  image?: string // ruta a la foto real (ej. /productos/dragon.jpg)
+  images?: string[] // la primera es la principal (URL o imagen subida desde el panel)
+  heightCm?: number
   isNew?: boolean
   bestSeller?: boolean
-  rating: number
-  printHours: number
+  hidden?: boolean // oculto en la tienda, visible solo en el panel
+  rating?: number
+  printHours?: number
 }
 
 export const STORE_NAME = 'TresD'
@@ -43,7 +48,8 @@ export const categories: Category[] = [
   { slug: 'repuestos', name: 'Repuestos técnicos', description: 'Piezas funcionales, engranajes y reemplazos a medida.', icon: 'gear', hue: 45 },
 ]
 
-export const products: Product[] = [
+// Productos de ejemplo: se cargan la primera vez o al "Restaurar ejemplos" en el panel.
+export const demoProducts: Product[] = [
   { id: 'maceta-geometrica', name: 'Maceta geométrica Low-Poly', category: 'decoracion', price: 12990, description: 'Maceta facetada con drenaje y plato incluido. Ideal para suculentas y cactus.', material: 'PLA', colors: ['#f4f1ea', '#2b2b2b', '#e86a3a', '#6aa88f'], isNew: true, rating: 4.8, printHours: 6 },
   { id: 'lampara-luna', name: 'Lámpara Luna litofanía', category: 'decoracion', price: 24990, oldPrice: 29990, description: 'Lámpara con relieve lunar real impreso como litofanía. Incluye base LED USB.', material: 'PLA', colors: ['#f4f1ea'], bestSeller: true, rating: 4.9, printHours: 14 },
   { id: 'jarron-espiral', name: 'Jarrón espiral', category: 'decoracion', price: 15990, description: 'Jarrón decorativo con patrón en espiral. Para flores secas.', material: 'PETG', colors: ['#c9b8f0', '#9fd8c9', '#f2c14e'], isNew: true, rating: 4.6, printHours: 9 },
@@ -62,4 +68,3 @@ export const products: Product[] = [
 ]
 
 export const getCategory = (slug?: string) => categories.find((c) => c.slug === slug)
-export const getProduct = (id?: string) => products.find((p) => p.id === id)

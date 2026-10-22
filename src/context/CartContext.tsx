@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { getProduct, type Product } from '../data/catalog'
+import type { Product } from '../data/catalog'
+import { useProducts } from './ProductsContext'
 
 export type CartItem = { id: string; color: string; qty: number }
 
@@ -29,6 +30,7 @@ function loadCart(): CartItem[] {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [raw, setRaw] = useState<CartItem[]>(loadCart)
   const [isOpen, setIsOpen] = useState(false)
+  const { getProduct } = useProducts()
 
   useEffect(() => {
     try {
@@ -67,7 +69,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ),
       remove: (id, color) => setRaw((prev) => prev.filter((i) => !same(i, id, color))),
     }
-  }, [raw, isOpen])
+  }, [raw, isOpen, getProduct])
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }

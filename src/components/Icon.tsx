@@ -21,6 +21,13 @@ const paths: Record<string, string> = {
   plus: 'M12 5v14M5 12h14',
   minus: 'M5 12h14',
   trash: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13',
+  edit: 'M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4',
+  eye: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6z',
+  eyeOff: 'M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3 3.9M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2',
+  download: 'M12 4v12M7 11l5 5 5-5M4 20h16',
+  image: 'M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4M15 8.5h.01',
+  settings: 'M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M14 4v4M8 10v4M16 16v4',
+  back: 'M19 12H5M11 6l-6 6 6 6',
 }
 
 type Props = { name: string; size?: number; className?: string; filled?: boolean }
