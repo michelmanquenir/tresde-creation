@@ -27,6 +27,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     const controller = new AbortController()
     fetchProducts(controller.signal)
       .then((list) => {
+        if (!Array.isArray(list)) throw new Error('Respuesta inesperada del servidor.')
         setProducts(list)
         setStatus('ready')
         setError('')

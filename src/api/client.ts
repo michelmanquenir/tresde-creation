@@ -64,6 +64,14 @@ export async function api<T>(path: string, { method = 'GET', body, auth = false,
 
   if (res.status === 204) return undefined as T
 
+  // Si la respuesta no es JSON, no llegó al backend (ej. Vercel devolvió index.html
+  // porque VITE_API_URL no está configurada o el backend no está publicado).
+  const isJson = res.headers.get('content-type')?.includes('application/json')
+  if (!isJson) {
+    console.error(`La API respondió sin JSON en ${API_URL + path}. Revisa VITE_API_URL.`)
+    throw new ApiError(res.status, 'No se pudo conectar con el servidor de la tienda. Inténtalo más tarde.')
+  }
+
   const data = await res.json().catch(() => null)
   if (!res.ok) {
     if (res.status === 401 && auth) window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT))
