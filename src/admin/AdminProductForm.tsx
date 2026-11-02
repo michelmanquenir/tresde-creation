@@ -1,7 +1,9 @@
-import { useState, type DragEvent, type FormEvent } from 'react'
+import { useEffect, useState, type DragEvent, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { categories, MATERIALS, type Material, type Product } from '../data/catalog'
 import { useProducts } from '../context/ProductsContext'
+import { adminApi, type ProductInput } from '../api/products'
+import { ApiError } from '../api/client'
 import { resizeImage } from '../utils/image'
 import Icon from '../components/Icon'
 import ProductCard from '../components/ProductCard'
@@ -59,41 +61,71 @@ const toForm = (p: Product): FormState => ({
 
 const num = (v: string) => (v.trim() === '' ? undefined : Number(v))
 
+// Carga el producto (si es edición) y luego muestra el formulario
 export default function AdminProductForm() {
   const { id } = useParams()
-  const { getProduct, saveProduct, newId } = useProducts()
+  const [state, setState] = useState<{ status: 'loading' | 'ready' | 'error'; product?: Product; error?: string }>(
+    { status: id ? 'loading' : 'ready' },
+  )
+
+  useEffect(() => {
+    if (!id) return
+    adminApi
+      .get(id)
+      .then((product) => setState({ status: 'ready', product }))
+      .catch((e) =>
+        setState({
+          status: 'error',
+          error: e instanceof ApiError && e.status === 404 ? 'Producto no encontrado.' : e.message,
+        }),
+      )
+  }, [id])
+
+  if (state.status === 'loading') {
+    return <div className="empty"><p className="muted">Cargando producto…</p></div>
+  }
+  if (state.status === 'error') {
+    return (
+      <div className="empty">
+        <h1>{state.error}</h1>
+        <Link to="/admin" className="btn btn-primary">Volver al listado</Link>
+      </div>
+    )
+  }
+  return <ProductForm existing={state.product} />
+}
+
+function ProductForm({ existing }: { existing?: Product }) {
+  const { reload: reloadStore } = useProducts()
   const navigate = useNavigate()
-  const existing = getProduct(id)
-  const isEdit = !!id
+  const isEdit = !!existing
 
   const [form, setForm] = useState<FormState>(() => (existing ? toForm(existing) : emptyForm))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saveError, setSaveError] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
-
-  if (isEdit && !existing) {
-    return (
-      <div className="empty">
-        <h1>Producto no encontrado</h1>
-        <Link to="/admin" className="btn btn-primary">Volver al listado</Link>
-      </div>
-    )
-  }
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }))
 
-  // ── Imágenes ──
+  // ── Imágenes: se reducen en el navegador y se suben al servidor ──
   const addFiles = async (files: FileList | File[]) => {
     const list = Array.from(files).filter((f) => f.type.startsWith('image/'))
     const room = MAX_IMAGES - form.images.length
     if (!list.length || room <= 0) return
     setUploading(true)
+    setSaveError('')
     try {
-      const resized = await Promise.all(list.slice(0, room).map((f) => resizeImage(f)))
-      setForm((f) => ({ ...f, images: [...f.images, ...resized].slice(0, MAX_IMAGES) }))
-    } catch {
-      setSaveError('No se pudo procesar una de las imágenes.')
+      const urls = await Promise.all(
+        list.slice(0, room).map(async (file) => {
+          const blob = await resizeImage(file)
+          return (await adminApi.uploadImage(blob, file.name.replace(/\.\w+$/, '') + '.jpg')).url
+        }),
+      )
+      setForm((f) => ({ ...f, images: [...f.images, ...urls].slice(0, MAX_IMAGES) }))
+    } catch (e) {
+      setSaveError(e instanceof ApiError ? e.message : 'No se pudo subir una de las imágenes.')
     } finally {
       setUploading(false)
     }
@@ -123,8 +155,7 @@ export default function AdminProductForm() {
   const removeColor = (i: number) => set('colors', form.colors.filter((_, j) => j !== i))
 
   // ── Construir producto ──
-  const toProduct = (): Product => ({
-    id: existing?.id ?? (newId(form.name || 'producto')),
+  const toInput = (): ProductInput => ({
     name: form.name.trim(),
     category: form.category,
     price: Number(form.price) || 0,
@@ -138,7 +169,6 @@ export default function AdminProductForm() {
     isNew: form.isNew,
     bestSeller: form.bestSeller,
     hidden: form.hidden,
-    rating: existing?.rating,
   })
 
   const validate = () => {
@@ -153,20 +183,33 @@ export default function AdminProductForm() {
     return Object.keys(e).length === 0
   }
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setSaveError('')
     if (!validate()) return
-    const product = toProduct()
+    setSaving(true)
     try {
-      saveProduct(product)
-      navigate('/admin', { state: { saved: product.name } })
+      const input = toInput()
+      const saved = existing ? await adminApi.update(existing.id, input) : await adminApi.create(input)
+      reloadStore()
+      navigate('/admin', { state: { saved: saved.name } })
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'No se pudo guardar.')
+      if (err instanceof ApiError) {
+        setErrors(err.fieldErrors) // errores por campo que devuelve el backend
+        setSaveError(err.message)
+      } else {
+        setSaveError('No se pudo guardar.')
+      }
+      setSaving(false)
     }
   }
 
-  const preview = { ...toProduct(), name: form.name || 'Nombre del producto' }
+  const preview: Product = {
+    ...toInput(),
+    id: existing?.id ?? 'vista-previa',
+    name: form.name || 'Nombre del producto',
+    rating: existing?.rating,
+  }
 
   return (
     <>
@@ -230,10 +273,12 @@ export default function AdminProductForm() {
               <label className="field">
                 Altura (cm)
                 <input type="number" min={0} step={0.5} value={form.heightCm} onChange={(e) => set('heightCm', e.target.value)} placeholder="12" />
+                {errors.heightCm && <span className="field-error">{errors.heightCm}</span>}
               </label>
               <label className="field">
                 Horas de impresión
                 <input type="number" min={0} step={0.5} value={form.printHours} onChange={(e) => set('printHours', e.target.value)} placeholder="8" />
+                {errors.printHours && <span className="field-error">{errors.printHours}</span>}
               </label>
             </div>
           </fieldset>
@@ -356,8 +401,8 @@ export default function AdminProductForm() {
 
           {saveError && <div className="alert">{saveError}</div>}
           <div className="form-actions">
-            <button type="submit" className="btn btn-primary btn-block" disabled={uploading}>
-              {isEdit ? 'Guardar cambios' : 'Crear producto'}
+            <button type="submit" className="btn btn-primary btn-block" disabled={uploading || saving}>
+              {saving ? 'Guardando…' : uploading ? 'Subiendo fotos…' : isEdit ? 'Guardar cambios' : 'Crear producto'}
             </button>
             <Link to="/admin" className="btn btn-ghost btn-block">Cancelar</Link>
           </div>

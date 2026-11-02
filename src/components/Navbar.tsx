@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { categories, STORE_NAME } from '../data/catalog'
 import { useCart } from '../context/CartContext'
 import Icon from './Icon'
+import ThemePicker from './ThemePicker'
 
 export default function Navbar() {
   const { count, open } = useCart()
@@ -53,6 +54,7 @@ export default function Navbar() {
           <NavLink to="/personalizado" className="nav-link hide-mobile">
             Pedido a medida
           </NavLink>
+          <ThemePicker />
           <button className="icon-btn cart-btn" onClick={open} aria-label={`Carrito, ${count} productos`}>
             <Icon name="cart" />
             {count > 0 && <span className="badge">{count}</span>}

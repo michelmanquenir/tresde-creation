@@ -1,6 +1,6 @@
-// Reduce una foto a un tamaño razonable y la devuelve como data URL (JPEG).
-// Así una foto de celular de 4 MB queda en ~100 KB y cabe en el almacenamiento.
-export async function resizeImage(file: File, maxSize = 1000, quality = 0.82): Promise<string> {
+// Reduce una foto a un tamaño razonable antes de subirla (JPEG).
+// Así una foto de celular de 4 MB queda en ~100–200 KB.
+export async function resizeImage(file: File, maxSize = 1600, quality = 0.85): Promise<Blob> {
   const bitmap = await createImageBitmap(file)
   const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height))
   const canvas = document.createElement('canvas')
@@ -12,5 +12,7 @@ export async function resizeImage(file: File, maxSize = 1000, quality = 0.82): P
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
   bitmap.close()
-  return canvas.toDataURL('image/jpeg', quality)
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('No se pudo procesar la imagen'))), 'image/jpeg', quality),
+  )
 }

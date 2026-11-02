@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { STORE_NAME } from '../data/catalog'
 import { useAuth } from '../context/AuthContext'
 import Icon from '../components/Icon'
+import ThemePicker from '../components/ThemePicker'
 import './admin.css'
 
 export default function AdminLayout() {
@@ -27,6 +28,7 @@ export default function AdminLayout() {
             <Link to="/" className="admin-store-link">
               Ver tienda <Icon name="arrow" size={16} />
             </Link>
+            <ThemePicker className="on-dark" />
             <span className="admin-user" title={session?.username}>
               <span className="admin-avatar" aria-hidden="true">{session?.name.charAt(0)}</span>
               <span className="hide-mobile">{session?.name}</span>

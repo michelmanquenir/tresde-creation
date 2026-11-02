@@ -1,17 +1,36 @@
-import { useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { categories, formatPrice, getCategory, type Product } from '../data/catalog'
 import { useProducts } from '../context/ProductsContext'
+import { adminApi } from '../api/products'
 import Icon from '../components/Icon'
 import ProductImage from '../components/ProductImage'
 
 export default function AdminProducts() {
-  const { products, saveProduct, deleteProduct, replaceAll, resetToDemo } = useProducts()
+  const { reload: reloadStore } = useProducts()
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState('')
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('')
   const [error, setError] = useState('')
-  const fileInput = useRef<HTMLInputElement>(null)
   const saved = (useLocation().state as { saved?: string } | null)?.saved
+  const [notice, setNotice] = useState(saved ? 'saved' : '')
+  const fileInput = useRef<HTMLInputElement>(null)
+
+  const load = () =>
+    adminApi
+      .list()
+      .then((list) => {
+        setProducts(list)
+        setError('')
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : 'No se pudieron cargar los productos.'))
+      .finally(() => setLoading(false))
+
+  useEffect(() => {
+    load()
+  }, [])
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -20,22 +39,38 @@ export default function AdminProducts() {
     )
   }, [products, query, category])
 
-  // Ejecuta una acción que guarda y muestra el error si no hay espacio
-  const run = (action: () => void) => {
+  // Ejecuta una acción contra la API y muestra el error si falla
+  const run = async (id: string, action: () => Promise<unknown>) => {
+    setError('')
+    setNotice('')
+    setBusyId(id)
     try {
-      setError('')
-      action()
+      await action()
+      reloadStore()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo guardar')
+      setError(e instanceof Error ? e.message : 'No se pudo completar la acción.')
+    } finally {
+      setBusyId('')
     }
   }
 
+  const onToggleHidden = (p: Product) =>
+    run(p.id, async () => {
+      const updated = await adminApi.setHidden(p.id, !p.hidden)
+      setProducts((prev) => prev.map((x) => (x.id === p.id ? updated : x)))
+    })
+
   const onDelete = (p: Product) => {
-    if (confirm(`¿Eliminar "${p.name}"? Esta acción no se puede deshacer.`)) run(() => deleteProduct(p.id))
+    if (!confirm(`¿Eliminar "${p.name}"? Esta acción no se puede deshacer.`)) return
+    run(p.id, async () => {
+      await adminApi.remove(p.id)
+      setProducts((prev) => prev.filter((x) => x.id !== p.id))
+    })
   }
 
   const onExport = () => {
-    const blob = new Blob([JSON.stringify(products, null, 2)], { type: 'application/json' })
+    const exportable = products.map(({ createdAt: _c, updatedAt: _u, ...rest }) => rest)
+    const blob = new Blob([JSON.stringify(exportable, null, 2)], { type: 'application/json' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = `productos-${new Date().toISOString().slice(0, 10)}.json`
@@ -53,18 +88,21 @@ export default function AdminProducts() {
         throw new Error('El archivo no tiene el formato de productos esperado.')
       }
       if (confirm(`Se reemplazarán los ${products.length} productos actuales por ${data.length} del archivo. ¿Continuar?`)) {
-        run(() => replaceAll(data))
+        await run('import', async () => {
+          setProducts(await adminApi.importAll(data))
+          setNotice('imported')
+        })
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo leer el archivo')
     }
   }
 
-  const onReset = () => {
-    if (confirm('¿Restaurar los productos de ejemplo? Se perderán los cambios que hiciste.')) run(resetToDemo)
-  }
-
   const visible = products.filter((p) => !p.hidden).length
+
+  if (loading) {
+    return <div className="empty"><p className="muted">Cargando productos…</p></div>
+  }
 
   return (
     <>
@@ -85,7 +123,8 @@ export default function AdminProducts() {
         <div><strong>{products.filter((p) => p.isNew).length}</strong><span>marcados como nuevos</span></div>
       </div>
 
-      {saved && !error && <div className="alert alert-ok">Se guardó “{saved}”.</div>}
+      {notice === 'saved' && saved && !error && <div className="alert alert-ok">Se guardó “{saved}”.</div>}
+      {notice === 'imported' && !error && <div className="alert alert-ok">Catálogo importado correctamente.</div>}
       {error && <div className="alert">{error}</div>}
 
       <div className="admin-toolbar">
@@ -111,7 +150,6 @@ export default function AdminProducts() {
             <Icon name="upload" size={16} /> Importar
           </button>
           <input ref={fileInput} type="file" accept="application/json,.json" hidden onChange={onImport} />
-          <button className="btn btn-ghost btn-sm" onClick={onReset}>Restaurar ejemplos</button>
         </div>
       </div>
 
@@ -155,7 +193,8 @@ export default function AdminProducts() {
               <span role="cell" className="admin-actions">
                 <button
                   className="icon-btn"
-                  onClick={() => run(() => saveProduct({ ...p, hidden: !p.hidden }))}
+                  disabled={busyId === p.id}
+                  onClick={() => onToggleHidden(p)}
                   title={p.hidden ? 'Mostrar en tienda' : 'Ocultar de la tienda'}
                   aria-label={p.hidden ? 'Mostrar en tienda' : 'Ocultar de la tienda'}
                 >
@@ -164,7 +203,7 @@ export default function AdminProducts() {
                 <Link to={`/admin/editar/${p.id}`} className="icon-btn" title="Editar" aria-label="Editar">
                   <Icon name="edit" size={18} />
                 </Link>
-                <button className="icon-btn danger" onClick={() => onDelete(p)} title="Eliminar" aria-label="Eliminar">
+                <button className="icon-btn danger" disabled={busyId === p.id} onClick={() => onDelete(p)} title="Eliminar" aria-label="Eliminar">
                   <Icon name="trash" size={18} />
                 </button>
               </span>

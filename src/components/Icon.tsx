@@ -28,6 +28,8 @@ const paths: Record<string, string> = {
   image: 'M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4M15 8.5h.01',
   settings: 'M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M14 4v4M8 10v4M16 16v4',
   back: 'M19 12H5M11 6l-6 6 6 6',
+  palette: 'M12 3a9 9 0 1 0 0 18c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.8.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.2-4-7.8-9-7.8zM7.5 12.5h.01M9.5 8h.01M14.5 8h.01M17 11.5h.01',
+  check: 'M5 12.5l4.5 4.5L19 7.5',
 }
 
 type Props = { name: string; size?: number; className?: string; filled?: boolean }

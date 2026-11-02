@@ -6,19 +6,29 @@ import { useProducts } from '../context/ProductsContext'
 import Icon from '../components/Icon'
 import ProductCard from '../components/ProductCard'
 import ProductImage from '../components/ProductImage'
+import LoadState from '../components/LoadState'
 import NotFound from './NotFound'
 
 export default function ProductPage() {
   const { id } = useParams()
-  const { getProduct, visibleProducts } = useProducts()
+  const { getProduct, visibleProducts, status } = useProducts()
   const product = getProduct(id)
   // key={id} en App reinicia este estado al cambiar de producto
-  const [color, setColor] = useState(product?.colors[0] ?? '')
+  const [pickedColor, setColor] = useState('')
   const [qty, setQty] = useState(1)
   const [imageIndex, setImageIndex] = useState(0)
   const { add } = useCart()
 
+  if (status !== 'ready') {
+    return (
+      <div className="container page">
+        <LoadState skeletons={1} />
+      </div>
+    )
+  }
   if (!product || product.hidden) return <NotFound />
+
+  const color = pickedColor || product.colors[0]
 
   const category = getCategory(product.category)
   const images = product.images ?? []

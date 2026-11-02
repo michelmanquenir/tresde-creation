@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import * as auth from '../auth/authService'
 import type { Session } from '../auth/authService'
+import { AUTH_EXPIRED_EVENT } from '../api/client'
 
 type AuthValue = {
   session: Session | null
@@ -12,6 +13,16 @@ const AuthContext = createContext<AuthValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(auth.getStoredSession)
+
+  // Si el backend rechaza el token (401), se cierra la sesión y RequireAuth manda al login
+  useEffect(() => {
+    const onExpired = () => {
+      auth.logout()
+      setSession(null)
+    }
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired)
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired)
+  }, [])
 
   // Cierra la sesión automáticamente cuando expira
   useEffect(() => {

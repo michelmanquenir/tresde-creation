@@ -89,9 +89,11 @@ export default function AdminLogin() {
           </button>
         </form>
 
-        <p className="login-hint muted small">
-          Acceso de prueba: <code>admin</code> / <code>admin</code>
-        </p>
+        {import.meta.env.DEV && (
+          <p className="login-hint muted small">
+            Acceso de desarrollo: <code>admin</code> / <code>admin</code>
+          </p>
+        )}
         <Link to="/" className="back-link login-back"><Icon name="back" size={16} /> Volver a la tienda</Link>
       </div>
     </div>

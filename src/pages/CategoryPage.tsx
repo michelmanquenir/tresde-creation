@@ -3,8 +3,8 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { categories, getCategory, MATERIALS, type Product } from '../data/catalog'
 import { useProducts } from '../context/ProductsContext'
 import ProductCard from '../components/ProductCard'
+import LoadState from '../components/LoadState'
 import NotFound from './NotFound'
-
 
 const sorters: Record<string, { label: string; fn: (a: Product, b: Product) => number }> = {
   relevancia: { label: 'Relevancia', fn: () => 0 },
@@ -17,7 +17,7 @@ const sorters: Record<string, { label: string; fn: (a: Product, b: Product) => n
 // Sirve para /categoria/:slug y para /buscar?q=
 export default function CategoryPage({ search = false }: { search?: boolean }) {
   const { slug } = useParams()
-  const { visibleProducts: products } = useProducts()
+  const { visibleProducts: products, status } = useProducts()
   const [params, setParams] = useSearchParams()
   const [materials, setMaterials] = useState<string[]>([])
 
@@ -102,7 +102,9 @@ export default function CategoryPage({ search = false }: { search?: boolean }) {
         </label>
       </div>
 
-      {list.length ? (
+      {status !== 'ready' ? (
+        <LoadState skeletons={8} />
+      ) : list.length ? (
         <div className="product-grid">
           {list.map((p) => <ProductCard key={p.id} product={p} />)}
         </div>

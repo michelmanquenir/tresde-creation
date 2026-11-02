@@ -16,6 +16,7 @@ import AdminProductForm from './admin/AdminProductForm'
 import AdminLogin from './admin/AdminLogin'
 import RequireAuth from './admin/RequireAuth'
 import { AuthProvider } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -48,6 +49,7 @@ function StoreLayout() {
 export default function App() {
   return (
     <BrowserRouter>
+      <ThemeProvider>
       <AuthProvider>
       <ProductsProvider>
         <CartProvider>
@@ -79,6 +81,7 @@ export default function App() {
         </CartProvider>
       </ProductsProvider>
       </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   )
 }

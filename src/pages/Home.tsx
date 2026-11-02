@@ -5,9 +5,10 @@ import { useProducts } from '../context/ProductsContext'
 import Icon from '../components/Icon'
 import ProductCard from '../components/ProductCard'
 import ProductImage from '../components/ProductImage'
+import LoadState from '../components/LoadState'
 
 export default function Home() {
-  const { visibleProducts: products } = useProducts()
+  const { visibleProducts: products, status } = useProducts()
   const newProducts = products.filter((p) => p.isNew).slice(0, 8)
   const bestSellers = products.filter((p) => p.bestSeller).slice(0, 4)
   const featured = products.find((p) => p.bestSeller) ?? products[0]
@@ -88,9 +89,13 @@ export default function Home() {
           </div>
           <Link to="/categoria/todos?orden=nuevos" className="see-all">Ver novedades <Icon name="arrow" size={16} /></Link>
         </div>
-        <div className="product-grid">
-          {newProducts.map((p) => <ProductCard key={p.id} product={p} />)}
-        </div>
+        {status === 'ready' ? (
+          <div className="product-grid">
+            {newProducts.map((p) => <ProductCard key={p.id} product={p} />)}
+          </div>
+        ) : (
+          <LoadState />
+        )}
       </section>
 
       {/* Banner pedido a medida */}
@@ -120,9 +125,13 @@ export default function Home() {
           <h2>Los más vendidos</h2>
           <Link to="/categoria/todos?orden=populares" className="see-all">Ver más <Icon name="arrow" size={16} /></Link>
         </div>
-        <div className="product-grid">
-          {bestSellers.map((p) => <ProductCard key={p.id} product={p} />)}
-        </div>
+        {status === 'ready' ? (
+          <div className="product-grid">
+            {bestSellers.map((p) => <ProductCard key={p.id} product={p} />)}
+          </div>
+        ) : (
+          status === 'loading' && <LoadState />
+        )}
       </section>
 
       {/* Newsletter */}

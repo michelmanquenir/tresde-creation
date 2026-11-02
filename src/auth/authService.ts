@@ -1,7 +1,7 @@
-// Servicio de autenticación.
-// HOY ES UN MOCK: valida admin/admin en el navegador. Esto NO es seguro en producción,
-// porque cualquiera puede leer este código. Cuando tengas backend, reemplaza login()
-// por una llamada a tu API que devuelva un token, y valida ese token en el servidor.
+// Autenticación contra el backend: POST /api/auth/login devuelve un token JWT.
+// El token se guarda en el navegador y se envía en cada petición del panel.
+
+import { api } from '../api/client'
 
 export type Session = {
   username: string
@@ -10,10 +10,13 @@ export type Session = {
   expiresAt: number // epoch ms
 }
 
-const STORAGE_KEY = 'tresd-session'
-const SESSION_HOURS = 8
+type LoginResponse = {
+  token: string
+  expiresAt: string // ISO
+  user: { username: string; name: string }
+}
 
-const MOCK_USERS = [{ username: 'admin', password: 'admin', name: 'Administrador' }]
+const STORAGE_KEY = 'tresd-session'
 
 const stores = (): Storage[] => {
   try {
@@ -24,19 +27,19 @@ const stores = (): Storage[] => {
 }
 
 export async function login(username: string, password: string, remember: boolean): Promise<Session> {
-  await new Promise((r) => setTimeout(r, 400)) // simula la latencia de una API
-
-  const user = MOCK_USERS.find((u) => u.username === username.trim().toLowerCase() && u.password === password)
-  if (!user) throw new Error('Usuario o contraseña incorrectos.')
-
+  const res = await api<LoginResponse>('/api/auth/login', {
+    method: 'POST',
+    body: { username: username.trim(), password },
+  })
   const session: Session = {
-    username: user.username,
-    name: user.name,
-    token: crypto.randomUUID(),
-    expiresAt: Date.now() + SESSION_HOURS * 60 * 60 * 1000,
+    username: res.user.username,
+    name: res.user.name,
+    token: res.token,
+    expiresAt: new Date(res.expiresAt).getTime(),
   }
+  logout() // limpia una sesión anterior guardada en el otro almacenamiento
   try {
-    // "Recordarme" guarda la sesión aunque cierres el navegador; si no, dura hasta cerrar la pestaña.
+    // "Mantener sesión" la guarda aunque cierres el navegador; si no, dura hasta cerrar la pestaña.
     ;(remember ? localStorage : sessionStorage).setItem(STORAGE_KEY, JSON.stringify(session))
   } catch {
     /* sin almacenamiento: la sesión vive solo en memoria */
@@ -60,8 +63,8 @@ export function getStoredSession(): Session | null {
       const raw = s.getItem(STORAGE_KEY)
       if (!raw) continue
       const session = JSON.parse(raw) as Session
-      if (session.expiresAt > Date.now()) return session
-      s.removeItem(STORAGE_KEY) // expirada
+      if (session.token && session.expiresAt > Date.now()) return session
+      s.removeItem(STORAGE_KEY) // expirada o de la versión anterior (sin token)
     } catch {
       /* datos corruptos o sin acceso */
     }
