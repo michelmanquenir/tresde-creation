@@ -17,8 +17,8 @@ export default function AdminLogin() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Si ya hay sesión, no tiene sentido mostrar el login
-  if (session) return <Navigate to={from} replace />
+  // Si ya hay sesión de administrador, no tiene sentido mostrar el login
+  if (session?.role === 'ADMIN') return <Navigate to={from} replace />
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -29,7 +29,12 @@ export default function AdminLogin() {
     setError('')
     setLoading(true)
     try {
-      await login(username, password, remember)
+      const s = await login(username, password, remember)
+      if (s.role !== 'ADMIN') {
+        setError('Esta cuenta no tiene acceso al panel de administración.')
+        setLoading(false)
+        return
+      }
       navigate(from, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión.')

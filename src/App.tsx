@@ -10,6 +10,8 @@ import CategoryPage from './pages/CategoryPage'
 import ProductPage from './pages/ProductPage'
 import CustomOrder from './pages/CustomOrder'
 import NotFound from './pages/NotFound'
+import AccountAuth from './pages/account/AccountAuth'
+import Account from './pages/account/Account'
 import AdminLayout from './admin/AdminLayout'
 import AdminProducts from './admin/AdminProducts'
 import AdminProductForm from './admin/AdminProductForm'
@@ -61,6 +63,9 @@ export default function App() {
               <Route path="/buscar" element={<CategoryPage search />} />
               <Route path="/producto/:id" element={<KeyedById>{(id) => <ProductPage key={id} />}</KeyedById>} />
               <Route path="/personalizado" element={<CustomOrder />} />
+              <Route path="/cuenta" element={<Account />} />
+              <Route path="/cuenta/ingresar" element={<AccountAuth key="login" mode="login" />} />
+              <Route path="/cuenta/registro" element={<AccountAuth key="register" mode="register" />} />
               <Route path="*" element={<NotFound />} />
             </Route>
 

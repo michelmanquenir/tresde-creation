@@ -36,7 +36,7 @@ function currentToken(): string | null {
 type RequestOptions = {
   method?: string
   body?: unknown // se envía como JSON (o tal cual si es FormData)
-  auth?: boolean // adjunta el token del administrador
+  auth?: boolean // adjunta el token de la sesión (admin o cliente)
   signal?: AbortSignal
 }
 

@@ -30,6 +30,8 @@ const paths: Record<string, string> = {
   back: 'M19 12H5M11 6l-6 6 6 6',
   palette: 'M12 3a9 9 0 1 0 0 18c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.8.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.2-4-7.8-9-7.8zM7.5 12.5h.01M9.5 8h.01M14.5 8h.01M17 11.5h.01',
   check: 'M5 12.5l4.5 4.5L19 7.5',
+  user: 'M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM4 21a8 8 0 0 1 16 0',
+  logout: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11',
 }
 
 type Props = { name: string; size?: number; className?: string; filled?: boolean }

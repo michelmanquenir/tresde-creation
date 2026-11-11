@@ -5,7 +5,8 @@ import { AUTH_EXPIRED_EVENT } from '../api/client'
 
 type AuthValue = {
   session: Session | null
-  login: (username: string, password: string, remember: boolean) => Promise<void>
+  login: (username: string, password: string, remember: boolean) => Promise<Session>
+  register: (name: string, email: string, password: string, remember: boolean) => Promise<Session>
   logout: () => void
 }
 
@@ -14,7 +15,7 @@ const AuthContext = createContext<AuthValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(auth.getStoredSession)
 
-  // Si el backend rechaza el token (401), se cierra la sesión y RequireAuth manda al login
+  // Si el backend rechaza el token (401), se cierra la sesión y las páginas protegidas mandan al login
   useEffect(() => {
     const onExpired = () => {
       auth.logout()
@@ -38,7 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       session,
       login: async (username, password, remember) => {
-        setSession(await auth.login(username, password, remember))
+        const s = await auth.login(username, password, remember)
+        setSession(s)
+        return s
+      },
+      register: async (name, email, password, remember) => {
+        const s = await auth.register(name, email, password, remember)
+        setSession(s)
+        return s
       },
       logout: () => {
         auth.logout()

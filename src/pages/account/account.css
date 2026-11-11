@@ -1,0 +1,30 @@
+/* ───────── Cuenta de cliente (ingresar, registro, mi cuenta) ───────── */
+/* Los estilos de campos (.field, .alert, .password-wrap, .toggle) vienen de admin/admin.css */
+.account-page { display: grid; place-items: center; padding: 48px 16px 72px; }
+.account-card {
+  width: 100%; max-width: 440px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 24px; padding: 32px 28px; display: grid; gap: 4px;
+}
+.account-card h1 { font-size: 1.6rem; margin: 0; }
+.account-card > p { margin: 4px 0 18px; }
+.account-form { display: grid; gap: 16px; }
+.account-form .btn { margin-top: 4px; }
+.account-switch { text-align: center; margin: 18px 0 0; }
+.account-switch a { font-weight: 600; color: var(--accent-text); }
+.account-switch a:hover { text-decoration: underline; }
+
+.account-profile { display: flex; align-items: center; gap: 14px; margin: 8px 0 20px; }
+.account-avatar {
+  width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: var(--accent-ink);
+  display: grid; place-items: center; font-weight: 700; font-size: 1.3rem; text-transform: uppercase; flex-shrink: 0;
+}
+.account-profile > div { display: grid; min-width: 0; }
+.account-profile strong { font-size: 1.1rem; }
+.account-profile span { overflow-wrap: anywhere; }
+.account-actions { display: grid; gap: 10px; }
+.account-actions .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+
+@media (max-width: 480px) {
+  .account-page { padding-top: 28px; }
+  .account-card { padding: 26px 20px; }
+}

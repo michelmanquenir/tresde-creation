@@ -1,11 +1,15 @@
-// Autenticación contra el backend: POST /api/auth/login devuelve un token JWT.
-// El token se guarda en el navegador y se envía en cada petición del panel.
+// Autenticación contra el backend: POST /api/auth/login y /api/auth/register devuelven un token JWT.
+// El token se guarda en el navegador y se envía en las peticiones que lo requieren.
+// La misma sesión sirve para el administrador (role ADMIN) y para los clientes (role CUSTOMER).
 
 import { api } from '../api/client'
 
+export type Role = 'ADMIN' | 'CUSTOMER'
+
 export type Session = {
-  username: string
+  username: string // en los clientes es su correo
   name: string
+  role: Role
   token: string
   expiresAt: number // epoch ms
 }
@@ -13,7 +17,7 @@ export type Session = {
 type LoginResponse = {
   token: string
   expiresAt: string // ISO
-  user: { username: string; name: string }
+  user: { username: string; name: string; role: Role }
 }
 
 const STORAGE_KEY = 'tresd-session'
@@ -26,14 +30,33 @@ const stores = (): Storage[] => {
   }
 }
 
-export async function login(username: string, password: string, remember: boolean): Promise<Session> {
-  const res = await api<LoginResponse>('/api/auth/login', {
-    method: 'POST',
-    body: { username: username.trim(), password },
-  })
+export function login(username: string, password: string, remember: boolean): Promise<Session> {
+  return startSession(
+    api<LoginResponse>('/api/auth/login', {
+      method: 'POST',
+      body: { username: username.trim(), password },
+    }),
+    remember,
+  )
+}
+
+/** Crea una cuenta de cliente y deja la sesión iniciada. */
+export function register(name: string, email: string, password: string, remember: boolean): Promise<Session> {
+  return startSession(
+    api<LoginResponse>('/api/auth/register', {
+      method: 'POST',
+      body: { name: name.trim(), email: email.trim(), password },
+    }),
+    remember,
+  )
+}
+
+async function startSession(request: Promise<LoginResponse>, remember: boolean): Promise<Session> {
+  const res = await request
   const session: Session = {
     username: res.user.username,
     name: res.user.name,
+    role: res.user.role,
     token: res.token,
     expiresAt: new Date(res.expiresAt).getTime(),
   }
@@ -63,8 +86,8 @@ export function getStoredSession(): Session | null {
       const raw = s.getItem(STORAGE_KEY)
       if (!raw) continue
       const session = JSON.parse(raw) as Session
-      if (session.token && session.expiresAt > Date.now()) return session
-      s.removeItem(STORAGE_KEY) // expirada o de la versión anterior (sin token)
+      if (session.token && session.role && session.expiresAt > Date.now()) return session
+      s.removeItem(STORAGE_KEY) // expirada o de una versión anterior (sin token o sin rol)
     } catch {
       /* datos corruptos o sin acceso */
     }

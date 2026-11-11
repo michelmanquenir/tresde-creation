@@ -2,11 +2,15 @@ import { useState, type FormEvent } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { categories, STORE_NAME } from '../data/catalog'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 import Icon from './Icon'
 import ThemePicker from './ThemePicker'
 
 export default function Navbar() {
   const { count, open } = useCart()
+  const { session } = useAuth()
+  const accountPath = session ? '/cuenta' : '/cuenta/ingresar'
+  const accountLabel = session ? `Mi cuenta (${session.name})` : 'Iniciar sesión'
   const [menuOpen, setMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
@@ -55,6 +59,9 @@ export default function Navbar() {
             Pedido a medida
           </NavLink>
           <ThemePicker />
+          <Link to={accountPath} className="icon-btn" aria-label={accountLabel} title={accountLabel}>
+            <Icon name="user" />
+          </Link>
           <button className="icon-btn cart-btn" onClick={open} aria-label={`Carrito, ${count} productos`}>
             <Icon name="cart" />
             {count > 0 && <span className="badge">{count}</span>}
@@ -94,6 +101,9 @@ export default function Navbar() {
         ))}
         <NavLink to="/personalizado" className="drawer-link accent" onClick={() => setMenuOpen(false)}>
           <Icon name="upload" /> Pedido a medida
+        </NavLink>
+        <NavLink to={accountPath} className="drawer-link" onClick={() => setMenuOpen(false)}>
+          <Icon name="user" /> {session ? 'Mi cuenta' : 'Iniciar sesión'}
         </NavLink>
       </aside>
     </header>
