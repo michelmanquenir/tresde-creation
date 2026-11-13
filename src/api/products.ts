@@ -1,4 +1,4 @@
-import type { Material, Product } from '../data/catalog'
+import type { Material, Product, ProductCost } from '../data/catalog'
 import { api } from './client'
 
 /** Datos que se envían para crear o editar un producto. */
@@ -16,6 +16,7 @@ export type ProductInput = {
   isNew: boolean
   bestSeller: boolean
   hidden: boolean
+  cost?: ProductCost
 }
 
 // ── Tienda (público) ──

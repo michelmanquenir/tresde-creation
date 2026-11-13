@@ -5,6 +5,23 @@ import { useProducts } from '../context/ProductsContext'
 import { adminApi } from '../api/products'
 import Icon from '../components/Icon'
 import ProductImage from '../components/ProductImage'
+import { useCostSettings } from '../api/settings'
+import { computeCost, formatCost, saleSummary, type CostSettings } from '../utils/pricing'
+
+// Ganancia por pieza bajo el precio (en rojo si se pierde dinero, en ámbar si está bajo el sugerido)
+function ProfitHint({ product: p, settings }: { product: Product; settings: CostSettings | null }) {
+  if (!settings) return null
+  const cost = computeCost(p.cost, p.material, settings)
+  if (!cost) return <span className="profit-hint muted">Sin costos</span>
+  const { profit } = saleSummary(p.price, cost.total, settings)
+  const tone = profit < 0 ? 'is-loss' : p.price < cost.suggested ? 'is-low' : 'is-ok'
+  const title = `Costo ${formatCost(cost.total)} · sugerido ${formatPrice(cost.suggested)}`
+  return (
+    <span className={`profit-hint ${tone}`} title={title}>
+      Ganancia {formatCost(profit)}
+    </span>
+  )
+}
 
 export default function AdminProducts() {
   const { reload: reloadStore } = useProducts()
@@ -17,6 +34,7 @@ export default function AdminProducts() {
   const saved = (useLocation().state as { saved?: string } | null)?.saved
   const [notice, setNotice] = useState(saved ? 'saved' : '')
   const fileInput = useRef<HTMLInputElement>(null)
+  const costSettings = useCostSettings()
 
   const load = () =>
     adminApi
@@ -111,7 +129,7 @@ export default function AdminProducts() {
           <h1>Productos</h1>
           <p className="muted">Administra las figuras y productos que se muestran en la tienda.</p>
         </div>
-        <Link to="/admin/nuevo" className="btn btn-primary">
+        <Link to="/admin/productos/nuevo" className="btn btn-primary">
           <Icon name="plus" size={18} /> Nuevo producto
         </Link>
       </div>
@@ -157,7 +175,7 @@ export default function AdminProducts() {
         <div className="empty">
           <Icon name="image" size={36} />
           <p className="muted">{products.length ? 'Ningún producto coincide con la búsqueda.' : 'Aún no tienes productos.'}</p>
-          <Link to="/admin/nuevo" className="btn btn-primary">Crear el primero</Link>
+          <Link to="/admin/productos/nuevo" className="btn btn-primary">Crear el primero</Link>
         </div>
       ) : (
         <div className="admin-table" role="table" aria-label="Lista de productos">
@@ -173,7 +191,7 @@ export default function AdminProducts() {
               <div className="admin-product" role="cell">
                 <div className="admin-thumb"><ProductImage product={p} /></div>
                 <div>
-                  <Link to={`/admin/editar/${p.id}`} className="admin-name">{p.name}</Link>
+                  <Link to={`/admin/productos/${p.id}/editar`} className="admin-name">{p.name}</Link>
                   <span className="muted small">
                     {p.material}
                     {p.heightCm ? ` · ${p.heightCm} cm` : ''} · {p.images?.length ?? 0} fotos
@@ -184,6 +202,7 @@ export default function AdminProducts() {
               <span role="cell" className="admin-cell-price">
                 <strong>{formatPrice(p.price)}</strong>
                 {p.oldPrice && <s className="muted small">{formatPrice(p.oldPrice)}</s>}
+                <ProfitHint product={p} settings={costSettings} />
               </span>
               <span role="cell" className="admin-badges">
                 {p.hidden ? <span className="tag tag-muted">Oculto</span> : <span className="tag tag-ok">Visible</span>}
@@ -200,7 +219,7 @@ export default function AdminProducts() {
                 >
                   <Icon name={p.hidden ? 'eyeOff' : 'eye'} size={18} />
                 </button>
-                <Link to={`/admin/editar/${p.id}`} className="icon-btn" title="Editar" aria-label="Editar">
+                <Link to={`/admin/productos/${p.id}/editar`} className="icon-btn" title="Editar" aria-label="Editar">
                   <Icon name="edit" size={18} />
                 </Link>
                 <button className="icon-btn danger" disabled={busyId === p.id} onClick={() => onDelete(p)} title="Eliminar" aria-label="Eliminar">

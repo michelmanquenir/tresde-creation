@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
-import { BrowserRouter, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom'
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { ProductsProvider } from './context/ProductsContext'
 import { CartProvider } from './context/CartContext'
 import Navbar from './components/Navbar'
@@ -13,6 +13,8 @@ import NotFound from './pages/NotFound'
 import AccountAuth from './pages/account/AccountAuth'
 import Account from './pages/account/Account'
 import AdminLayout from './admin/AdminLayout'
+import AdminDashboard from './admin/AdminDashboard'
+import AdminSettings from './admin/AdminSettings'
 import AdminProducts from './admin/AdminProducts'
 import AdminProductForm from './admin/AdminProductForm'
 import AdminLogin from './admin/AdminLogin'
@@ -78,9 +80,15 @@ export default function App() {
                 </RequireAuth>
               }
             >
-              <Route index element={<AdminProducts />} />
-              <Route path="nuevo" element={<AdminProductForm />} />
-              <Route path="editar/:id" element={<KeyedById>{(id) => <AdminProductForm key={id} />}</KeyedById>} />
+              <Route index element={<AdminDashboard />} />
+              <Route path="productos" element={<AdminProducts />} />
+              <Route path="productos/nuevo" element={<AdminProductForm />} />
+              <Route
+                path="productos/:id/editar"
+                element={<KeyedById>{(id) => <AdminProductForm key={id} />}</KeyedById>}
+              />
+              <Route path="configuracion" element={<AdminSettings />} />
+              <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>
           </Routes>
         </CartProvider>

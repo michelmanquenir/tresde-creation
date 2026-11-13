@@ -9,8 +9,13 @@ import ThemePicker from './ThemePicker'
 export default function Navbar() {
   const { count, open } = useCart()
   const { session } = useAuth()
-  const accountPath = session ? '/cuenta' : '/cuenta/ingresar'
-  const accountLabel = session ? `Mi cuenta (${session.name})` : 'Iniciar sesión'
+  const isAdmin = session?.role === 'ADMIN'
+  const accountPath = isAdmin ? '/admin' : session ? '/cuenta' : '/cuenta/ingresar'
+  const accountLabel = isAdmin
+    ? 'Panel de administración'
+    : session
+      ? `Mi cuenta (${session.name})`
+      : 'Iniciar sesión'
   const [menuOpen, setMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
@@ -103,7 +108,7 @@ export default function Navbar() {
           <Icon name="upload" /> Pedido a medida
         </NavLink>
         <NavLink to={accountPath} className="drawer-link" onClick={() => setMenuOpen(false)}>
-          <Icon name="user" /> {session ? 'Mi cuenta' : 'Iniciar sesión'}
+          <Icon name="user" /> {isAdmin ? 'Panel de administración' : session ? 'Mi cuenta' : 'Iniciar sesión'}
         </NavLink>
       </aside>
     </header>

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { ApiError } from '../../api/client'
+import type { Role } from '../../auth/authService'
 import PasswordInput from '../../components/PasswordInput'
 import '../../admin/admin.css'
 import './account.css'
@@ -26,7 +27,10 @@ export default function AccountAuth({ mode }: { mode: Mode }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  if (session) return <Navigate to={from} replace />
+  // El administrador va directo al panel; el cliente vuelve a donde estaba (o a "Mi cuenta")
+  const destination = (role: Role) => (role === 'ADMIN' && !from.startsWith('/admin') ? '/admin' : from)
+
+  if (session) return <Navigate to={destination(session.role)} replace />
 
   const validate = (): Errors => {
     const e: Errors = {}
@@ -47,9 +51,10 @@ export default function AccountAuth({ mode }: { mode: Mode }) {
 
     setLoading(true)
     try {
-      if (isRegister) await register(name, email, password, remember)
-      else await login(email, password, remember)
-      navigate(from, { replace: true })
+      const s = isRegister
+        ? await register(name, email, password, remember)
+        : await login(email, password, remember)
+      navigate(destination(s.role), { replace: true })
     } catch (err) {
       if (err instanceof ApiError) {
         setErrors(err.fieldErrors as Errors)

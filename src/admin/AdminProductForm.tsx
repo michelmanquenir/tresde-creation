@@ -1,12 +1,15 @@
 import { useEffect, useState, type DragEvent, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { categories, MATERIALS, type Material, type Product } from '../data/catalog'
+import { categories, formatPrice, MATERIALS, type Material, type Product } from '../data/catalog'
 import { useProducts } from '../context/ProductsContext'
 import { adminApi, type ProductInput } from '../api/products'
 import { ApiError } from '../api/client'
 import { resizeImage } from '../utils/image'
 import Icon from '../components/Icon'
 import ProductCard from '../components/ProductCard'
+import { useCostSettings } from '../api/settings'
+import { computeCost, formatCost, saleSummary } from '../utils/pricing'
+import CostLines from './CostLines'
 
 const MAX_IMAGES = 6
 const PRESET_COLORS = ['#f4f1ea', '#2b2b2b', '#bdbdbd', '#e8443a', '#e86a3a', '#f2c14e', '#1e9e6a', '#3a7be8', '#7b4bd6', '#d4af37']
@@ -25,6 +28,11 @@ type FormState = {
   isNew: boolean
   bestSeller: boolean
   hidden: boolean
+  // Costos (solo panel)
+  grams: string
+  batchHours: string
+  batchPieces: string
+  accessoriesCost: string
 }
 
 const emptyForm: FormState = {
@@ -41,7 +49,13 @@ const emptyForm: FormState = {
   isNew: true,
   bestSeller: false,
   hidden: false,
+  grams: '',
+  batchHours: '',
+  batchPieces: '1',
+  accessoriesCost: '',
 }
+
+const str = (n?: number) => (n === undefined || n === null ? '' : String(n))
 
 const toForm = (p: Product): FormState => ({
   name: p.name,
@@ -57,6 +71,10 @@ const toForm = (p: Product): FormState => ({
   isNew: !!p.isNew,
   bestSeller: !!p.bestSeller,
   hidden: !!p.hidden,
+  grams: str(p.cost?.grams),
+  batchHours: str(p.cost?.batchHours),
+  batchPieces: str(p.cost?.batchPieces) || '1',
+  accessoriesCost: str(p.cost?.accessoriesCost),
 })
 
 const num = (v: string) => (v.trim() === '' ? undefined : Number(v))
@@ -88,7 +106,7 @@ export default function AdminProductForm() {
     return (
       <div className="empty">
         <h1>{state.error}</h1>
-        <Link to="/admin" className="btn btn-primary">Volver al listado</Link>
+        <Link to="/admin/productos" className="btn btn-primary">Volver al listado</Link>
       </div>
     )
   }
@@ -106,6 +124,7 @@ function ProductForm({ existing }: { existing?: Product }) {
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
+  const costSettings = useCostSettings()
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }))
 
@@ -169,6 +188,12 @@ function ProductForm({ existing }: { existing?: Product }) {
     isNew: form.isNew,
     bestSeller: form.bestSeller,
     hidden: form.hidden,
+    cost: {
+      grams: num(form.grams),
+      batchHours: num(form.batchHours),
+      batchPieces: num(form.batchPieces) ?? 1,
+      accessoriesCost: num(form.accessoriesCost),
+    },
   })
 
   const validate = () => {
@@ -179,6 +204,7 @@ function ProductForm({ existing }: { existing?: Product }) {
       e.oldPrice = 'El precio anterior debe ser mayor al precio actual.'
     if (!form.description.trim()) e.description = 'Agrega una descripción.'
     if (!form.colors.length) e.colors = 'Agrega al menos un color.'
+    if (form.batchPieces && !(Number(form.batchPieces) >= 1)) e['cost.batchPieces'] = 'Al menos 1 pieza por lote.'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -192,7 +218,7 @@ function ProductForm({ existing }: { existing?: Product }) {
       const input = toInput()
       const saved = existing ? await adminApi.update(existing.id, input) : await adminApi.create(input)
       reloadStore()
-      navigate('/admin', { state: { saved: saved.name } })
+      navigate('/admin/productos', { state: { saved: saved.name } })
     } catch (err) {
       if (err instanceof ApiError) {
         setErrors(err.fieldErrors) // errores por campo que devuelve el backend
@@ -204,6 +230,11 @@ function ProductForm({ existing }: { existing?: Product }) {
     }
   }
 
+  // Costo y ganancia en vivo con la configuración del panel
+  const cost = costSettings ? computeCost(toInput().cost, form.material, costSettings) : null
+  const price = Number(form.price) || 0
+  const sale = cost && costSettings && price > 0 ? saleSummary(price, cost.total, costSettings) : null
+
   const preview: Product = {
     ...toInput(),
     id: existing?.id ?? 'vista-previa',
@@ -213,7 +244,7 @@ function ProductForm({ existing }: { existing?: Product }) {
 
   return (
     <>
-      <Link to="/admin" className="back-link"><Icon name="back" size={16} /> Volver a productos</Link>
+      <Link to="/admin/productos" className="back-link"><Icon name="back" size={16} /> Volver a productos</Link>
       <div className="admin-title">
         <h1>{isEdit ? `Editar: ${existing?.name}` : 'Nuevo producto'}</h1>
       </div>
@@ -281,6 +312,71 @@ function ProductForm({ existing }: { existing?: Product }) {
                 {errors.printHours && <span className="field-error">{errors.printHours}</span>}
               </label>
             </div>
+          </fieldset>
+
+          {/* Costos */}
+          <fieldset className="panel">
+            <legend>Costos <span className="muted small">(solo los ves tú)</span></legend>
+            <div className="field-row">
+              <label className="field">
+                Gramos por pieza
+                <input type="number" min={0} step={0.5} inputMode="decimal" value={form.grams} onChange={(e) => set('grams', e.target.value)} placeholder="Ej: 11" />
+                {errors['cost.grams'] && <span className="field-error">{errors['cost.grams']}</span>}
+              </label>
+              <label className="field">
+                <span>Accesorios por pieza <span className="muted small">($)</span></span>
+                <input type="number" min={0} step={10} inputMode="numeric" value={form.accessoriesCost} onChange={(e) => set('accessoriesCost', e.target.value)} placeholder="Ej: 30" />
+                {errors['cost.accessoriesCost'] && <span className="field-error">{errors['cost.accessoriesCost']}</span>}
+              </label>
+            </div>
+            <div className="field-row">
+              <label className="field">
+                Horas de impresión del lote
+                <input type="number" min={0} step={0.5} inputMode="decimal" value={form.batchHours} onChange={(e) => set('batchHours', e.target.value)} placeholder="Ej: 7" />
+                {errors['cost.batchHours'] && <span className="field-error">{errors['cost.batchHours']}</span>}
+              </label>
+              <label className="field">
+                Piezas en ese lote
+                <input type="number" min={1} step={1} inputMode="numeric" value={form.batchPieces} onChange={(e) => set('batchPieces', e.target.value)} />
+                {errors['cost.batchPieces'] && <span className="field-error">{errors['cost.batchPieces']}</span>}
+              </label>
+            </div>
+            <p className="muted small">
+              Si imprimes varias piezas a la vez, pon el tiempo total y cuántas salen: el costo de máquina se reparte entre ellas.
+            </p>
+
+            {!costSettings ? (
+              <p className="muted small">Cargando configuración de costos…</p>
+            ) : !cost ? (
+              <p className="muted small">Completa los gramos y las horas para ver el costo y el precio sugerido.</p>
+            ) : (
+              <div className="cost-summary">
+                <CostLines cost={cost} />
+                <div className="cost-suggested">
+                  <div>
+                    <span className="muted small">Precio sugerido (costo × {costSettings.priceMultiplier})</span>
+                    <strong>{formatPrice(cost.suggested)}</strong>
+                  </div>
+                  {price !== cost.suggested && (
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => set('price', String(cost.suggested))}>
+                      Usar este precio
+                    </button>
+                  )}
+                </div>
+                {sale && (
+                  <dl className="cost-lines">
+                    <div><dt>Precio de venta</dt><dd>{formatPrice(price)}</dd></div>
+                    <div><dt>Costo</dt><dd>−{formatCost(cost.total)}</dd></div>
+                    <div><dt>Para la máquina ({costSettings.machineReservePercent}%)</dt><dd>−{formatCost(sale.reserve)}</dd></div>
+                    <div className={`cost-total ${sale.profit < 0 ? 'is-loss' : ''}`}>
+                      <dt>Ganancia por pieza</dt>
+                      <dd>{formatCost(sale.profit)} <span className="muted small">({Math.round(sale.margin * 100)}%)</span></dd>
+                    </div>
+                  </dl>
+                )}
+                {sale && sale.profit < 0 && <div className="alert">Con este precio pierdes dinero en cada venta.</div>}
+              </div>
+            )}
           </fieldset>
 
           {/* Fotos */}
@@ -404,7 +500,7 @@ function ProductForm({ existing }: { existing?: Product }) {
             <button type="submit" className="btn btn-primary btn-block" disabled={uploading || saving}>
               {saving ? 'Guardando…' : uploading ? 'Subiendo fotos…' : isEdit ? 'Guardar cambios' : 'Crear producto'}
             </button>
-            <Link to="/admin" className="btn btn-ghost btn-block">Cancelar</Link>
+            <Link to="/admin/productos" className="btn btn-ghost btn-block">Cancelar</Link>
           </div>
         </aside>
       </form>

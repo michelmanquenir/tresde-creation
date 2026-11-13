@@ -11,6 +11,14 @@ export type Category = {
 export const MATERIALS = ['PLA', 'PETG', 'Resina', 'TPU'] as const
 export type Material = (typeof MATERIALS)[number]
 
+/** Datos para calcular el costo (solo panel). Ver utils/pricing.ts */
+export type ProductCost = {
+  grams?: number // filamento por pieza
+  batchHours?: number // horas que tarda el lote completo
+  batchPieces?: number // piezas que salen en ese lote
+  accessoriesCost?: number // argollas, imanes, etc. por pieza
+}
+
 export type Product = {
   id: string
   name: string
@@ -29,6 +37,7 @@ export type Product = {
   printHours?: number
   createdAt?: string // los pone el backend
   updatedAt?: string
+  cost?: ProductCost // solo llega al panel de administración
 }
 
 export const STORE_NAME = 'TresD'
