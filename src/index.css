@@ -522,3 +522,15 @@ body { transition: background-color .25s, color .25s; }
 @media (max-width: 820px) {
   .theme-menu { position: fixed; top: 64px; right: 16px; }
 }
+
+/* ───────── Stock en la tienda ───────── */
+.tag-out { background: #c0392b; color: #fff; }
+.card.is-sold-out .card-media { opacity: .6; }
+.add-btn:disabled { opacity: .4; cursor: not-allowed; }
+.qty button:disabled { opacity: .35; cursor: not-allowed; background: transparent; }
+.stock-status { margin: 0; font-size: .92rem; font-weight: 600; }
+.stock-status.is-ok { color: #146c48; }
+.stock-status.is-low { color: #a86400; }
+.stock-status.is-out { color: #c0392b; }
+.stock-msg { display: block; font-size: .76rem; font-weight: 600; color: #a86400; margin-top: 4px; }
+.stock-msg.is-out { color: #c0392b; }

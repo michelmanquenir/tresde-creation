@@ -5,18 +5,21 @@ import Icon from './Icon'
 import ProductImage from './ProductImage'
 
 export default function ProductCard({ product }: { product: Product }) {
-  const { add } = useCart()
+  const { add, available } = useCart()
+  const soldOut = !product.stock
+  const canAdd = available(product.id) > 0
   const discount = product.oldPrice
     ? Math.round((1 - product.price / product.oldPrice) * 100)
     : 0
 
   return (
-    <article className="card">
+    <article className={`card ${soldOut ? 'is-sold-out' : ''}`}>
       <Link to={`/producto/${product.id}`} className="card-media">
         <ProductImage product={product} />
         <div className="tags">
           {product.isNew && <span className="tag tag-new">Nuevo</span>}
           {discount > 0 && <span className="tag tag-sale">-{discount}%</span>}
+          {soldOut && <span className="tag tag-out">Agotado</span>}
         </div>
       </Link>
       <div className="card-body">
@@ -43,6 +46,8 @@ export default function ProductCard({ product }: { product: Product }) {
           <button
             className="icon-btn add-btn"
             onClick={() => add(product.id, product.colors[0])}
+            disabled={!canAdd}
+            title={soldOut ? 'Agotado' : canAdd ? undefined : 'Ya tienes todo el stock en el carrito'}
             aria-label={`Agregar ${product.name} al carrito`}
           >
             <Icon name="plus" size={18} />

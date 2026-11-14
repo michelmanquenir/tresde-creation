@@ -47,10 +47,19 @@ export default function CartDrawer() {
                         <Icon name="minus" size={14} />
                       </button>
                       <span>{item.qty}</span>
-                      <button onClick={() => setQty(item.id, item.color, item.qty + 1)} aria-label="Agregar uno">
+                      <button
+                        onClick={() => setQty(item.id, item.color, item.qty + 1)}
+                        disabled={item.qty >= item.maxQty}
+                        aria-label="Agregar uno"
+                      >
                         <Icon name="plus" size={14} />
                       </button>
                     </div>
+                    {item.qty === 0 ? (
+                      <span className="stock-msg is-out">Agotado: quítalo del carrito</span>
+                    ) : item.qty >= item.maxQty && (
+                      <span className="stock-msg">Máximo disponible</span>
+                    )}
                   </div>
                   <div className="cart-right">
                     <strong>{formatPrice(item.product.price * item.qty)}</strong>

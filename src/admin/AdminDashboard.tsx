@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { categories, type Product } from '../data/catalog'
+import { LOW_STOCK, categories, type Product } from '../data/catalog'
 import { useAuth } from '../context/AuthContext'
 import { adminApi } from '../api/products'
 import Icon from '../components/Icon'
@@ -22,6 +22,7 @@ export default function AdminDashboard() {
   const visible = list.filter((p) => !p.hidden).length
   const onSale = list.filter((p) => p.oldPrice && p.oldPrice > p.price).length
   const noPhotos = list.filter((p) => !p.images?.length)
+  const lowStock = list.filter((p) => (p.stock ?? 0) <= LOW_STOCK).sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0))
   const byCategory = categories.map((c) => ({ ...c, count: list.filter((p) => p.category === c.slug).length }))
   const maxCount = Math.max(1, ...byCategory.map((c) => c.count))
 
@@ -39,7 +40,7 @@ export default function AdminDashboard() {
       <div className="admin-stats">
         <div><strong>{products ? list.length : '–'}</strong><span>productos en total</span></div>
         <div><strong>{products ? visible : '–'}</strong><span>visibles en tienda</span></div>
-        <div><strong>{products ? list.length - visible : '–'}</strong><span>ocultos</span></div>
+        <div><strong>{products ? list.filter((p) => !p.stock).length : '–'}</strong><span>agotados</span></div>
         <div><strong>{products ? onSale : '–'}</strong><span>en oferta</span></div>
       </div>
 
@@ -92,6 +93,30 @@ export default function AdminDashboard() {
                 </li>
               ))}
               {noPhotos.length > 6 && <li className="muted small">y {noPhotos.length - 6} más…</li>}
+            </ul>
+          )}
+        </section>
+
+        <section className="panel">
+          <h2 className="legend">Stock bajo</h2>
+          {!products ? (
+            <p className="muted small">Cargando…</p>
+          ) : lowStock.length === 0 ? (
+            <p className="muted small"><Icon name="check" size={16} /> Todos los productos tienen más de {LOW_STOCK} unidades.</p>
+          ) : (
+            <ul className="dash-list">
+              {lowStock.slice(0, 6).map((p) => (
+                <li key={p.id}>
+                  <span>
+                    {p.name}{' '}
+                    <span className={`stock-note ${p.stock ? 'is-low' : 'is-out'}`}>
+                      {p.stock ? `${p.stock} ${p.stock === 1 ? 'unidad' : 'unidades'}` : 'Agotado'}
+                    </span>
+                  </span>
+                  <Link to={`/admin/productos/${p.id}/editar`} className="btn btn-ghost btn-sm">Reponer</Link>
+                </li>
+              ))}
+              {lowStock.length > 6 && <li className="muted small">y {lowStock.length - 6} más…</li>}
             </ul>
           )}
         </section>

@@ -35,10 +35,14 @@ export type Product = {
   hidden?: boolean // oculto en la tienda, visible solo en el panel
   rating?: number
   printHours?: number
+  stock: number // unidades disponibles (0 = agotado)
   createdAt?: string // los pone el backend
   updatedAt?: string
   cost?: ProductCost // solo llega al panel de administración
 }
+
+// Desde cuántas unidades se avisa "quedan pocas"
+export const LOW_STOCK = 2
 
 export const STORE_NAME = 'TresD'
 export const CURRENCY = { locale: 'es-CL', code: 'CLP' }

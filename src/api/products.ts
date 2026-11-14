@@ -11,6 +11,7 @@ export type ProductInput = {
   material: Material
   heightCm?: number
   printHours?: number
+  stock: number
   colors: string[]
   images: string[]
   isNew: boolean
@@ -35,6 +36,8 @@ export const adminApi = {
       body: { hidden },
       auth: true,
     }),
+  setStock: (id: string, stock: number) =>
+    api<Product>(`/api/admin/products/${encodeURIComponent(id)}/stock`, { method: 'PATCH', body: { stock }, auth: true }),
   remove: (id: string) => api<void>(`/api/admin/products/${encodeURIComponent(id)}`, { method: 'DELETE', auth: true }),
   importAll: (products: unknown[]) =>
     api<Product[]>('/api/admin/products/import', { method: 'POST', body: products, auth: true }),

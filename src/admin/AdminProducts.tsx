@@ -5,6 +5,7 @@ import { useProducts } from '../context/ProductsContext'
 import { adminApi } from '../api/products'
 import Icon from '../components/Icon'
 import ProductImage from '../components/ProductImage'
+import StockEditor from './StockEditor'
 import { useCostSettings } from '../api/settings'
 import { computeCost, formatCost, saleSummary, type CostSettings } from '../utils/pricing'
 
@@ -78,6 +79,12 @@ export default function AdminProducts() {
       setProducts((prev) => prev.map((x) => (x.id === p.id ? updated : x)))
     })
 
+  const onSetStock = (p: Product, stock: number) =>
+    run(p.id, async () => {
+      const updated = await adminApi.setStock(p.id, stock)
+      setProducts((prev) => prev.map((x) => (x.id === p.id ? updated : x)))
+    })
+
   const onDelete = (p: Product) => {
     if (!confirm(`¿Eliminar "${p.name}"? Esta acción no se puede deshacer.`)) return
     run(p.id, async () => {
@@ -138,7 +145,7 @@ export default function AdminProducts() {
         <div><strong>{products.length}</strong><span>en total</span></div>
         <div><strong>{visible}</strong><span>visibles en tienda</span></div>
         <div><strong>{products.length - visible}</strong><span>ocultos</span></div>
-        <div><strong>{products.filter((p) => p.isNew).length}</strong><span>marcados como nuevos</span></div>
+        <div><strong>{products.filter((p) => !p.stock).length}</strong><span>agotados</span></div>
       </div>
 
       {notice === 'saved' && saved && !error && <div className="alert alert-ok">Se guardó “{saved}”.</div>}
@@ -183,6 +190,7 @@ export default function AdminProducts() {
             <span role="columnheader">Producto</span>
             <span role="columnheader">Categoría</span>
             <span role="columnheader">Precio</span>
+            <span role="columnheader">Stock</span>
             <span role="columnheader">Estado</span>
             <span role="columnheader" className="right">Acciones</span>
           </div>
@@ -203,6 +211,9 @@ export default function AdminProducts() {
                 <strong>{formatPrice(p.price)}</strong>
                 {p.oldPrice && <s className="muted small">{formatPrice(p.oldPrice)}</s>}
                 <ProfitHint product={p} settings={costSettings} />
+              </span>
+              <span role="cell">
+                <StockEditor stock={p.stock ?? 0} disabled={busyId === p.id} onSave={(n) => onSetStock(p, n)} />
               </span>
               <span role="cell" className="admin-badges">
                 {p.hidden ? <span className="tag tag-muted">Oculto</span> : <span className="tag tag-ok">Visible</span>}

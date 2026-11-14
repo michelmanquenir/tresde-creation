@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { formatPrice, getCategory } from '../data/catalog'
+import { LOW_STOCK, formatPrice, getCategory } from '../data/catalog'
 import { useCart } from '../context/CartContext'
 import { useProducts } from '../context/ProductsContext'
 import Icon from '../components/Icon'
@@ -17,7 +17,7 @@ export default function ProductPage() {
   const [pickedColor, setColor] = useState('')
   const [qty, setQty] = useState(1)
   const [imageIndex, setImageIndex] = useState(0)
-  const { add } = useCart()
+  const { add, available } = useCart()
 
   if (status !== 'ready') {
     return (
@@ -29,6 +29,9 @@ export default function ProductPage() {
   if (!product || product.hidden) return <NotFound />
 
   const color = pickedColor || product.colors[0]
+  const stock = product.stock ?? 0
+  const canAdd = available(product.id) // descuenta lo que ya está en el carrito
+  const amount = Math.min(qty, Math.max(canAdd, 1))
 
   const category = getCategory(product.category)
   const images = product.images ?? []
@@ -111,16 +114,39 @@ export default function ProductPage() {
             <span className="chip sm active">{product.material}</span>
           </div>
 
-          <div className="buy-row">
-            <div className="qty lg">
-              <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Menos"><Icon name="minus" size={16} /></button>
-              <span>{qty}</span>
-              <button onClick={() => setQty((q) => q + 1)} aria-label="Más"><Icon name="plus" size={16} /></button>
+          <p className={`stock-status ${stock === 0 ? 'is-out' : stock <= LOW_STOCK ? 'is-low' : 'is-ok'}`}>
+            {stock === 0
+              ? 'Agotado por ahora'
+              : stock <= LOW_STOCK
+                ? `¡Quedan solo ${stock} ${stock === 1 ? 'unidad' : 'unidades'}!`
+                : `${stock} unidades disponibles`}
+          </p>
+
+          {stock === 0 ? (
+            <div className="buy-row">
+              <Link to="/personalizado" className="btn btn-primary btn-grow">
+                <Icon name="sparkle" size={18} /> Pedirlo por encargo
+              </Link>
             </div>
-            <button className="btn btn-primary btn-grow" onClick={() => add(product.id, color, qty)}>
-              <Icon name="cart" size={18} /> Agregar al carrito
-            </button>
-          </div>
+          ) : (
+            <div className="buy-row">
+              <div className="qty lg">
+                <button onClick={() => setQty(Math.max(1, amount - 1))} aria-label="Menos"><Icon name="minus" size={16} /></button>
+                <span>{amount}</span>
+                <button onClick={() => setQty(amount + 1)} disabled={amount >= canAdd} aria-label="Más"><Icon name="plus" size={16} /></button>
+              </div>
+              <button
+                className="btn btn-primary btn-grow"
+                disabled={canAdd === 0}
+                onClick={() => {
+                  add(product.id, color, amount)
+                  setQty(1)
+                }}
+              >
+                <Icon name="cart" size={18} /> {canAdd === 0 ? 'Ya tienes todo el stock en el carrito' : 'Agregar al carrito'}
+              </button>
+            </div>
+          )}
 
           <ul className="pdp-perks">
             <li><Icon name="truck" size={18} /> Despacho en 3–5 días hábiles</li>

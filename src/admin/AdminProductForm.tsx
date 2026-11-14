@@ -23,6 +23,7 @@ type FormState = {
   material: Material
   heightCm: string
   printHours: string
+  stock: string
   colors: string[]
   images: string[]
   isNew: boolean
@@ -44,6 +45,7 @@ const emptyForm: FormState = {
   material: 'PLA',
   heightCm: '',
   printHours: '',
+  stock: '',
   colors: ['#bdbdbd'],
   images: [],
   isNew: true,
@@ -66,6 +68,7 @@ const toForm = (p: Product): FormState => ({
   material: p.material,
   heightCm: p.heightCm ? String(p.heightCm) : '',
   printHours: p.printHours ? String(p.printHours) : '',
+  stock: String(p.stock ?? 0),
   colors: p.colors.length ? p.colors : ['#bdbdbd'],
   images: p.images ?? [],
   isNew: !!p.isNew,
@@ -183,6 +186,7 @@ function ProductForm({ existing }: { existing?: Product }) {
     material: form.material,
     heightCm: num(form.heightCm),
     printHours: num(form.printHours),
+    stock: Number(form.stock) || 0,
     colors: form.colors,
     images: form.images,
     isNew: form.isNew,
@@ -204,6 +208,8 @@ function ProductForm({ existing }: { existing?: Product }) {
       e.oldPrice = 'El precio anterior debe ser mayor al precio actual.'
     if (!form.description.trim()) e.description = 'Agrega una descripción.'
     if (!form.colors.length) e.colors = 'Agrega al menos un color.'
+    if (form.stock.trim() === '' || !Number.isInteger(Number(form.stock)) || Number(form.stock) < 0)
+      e.stock = 'Indica cuántas unidades tienes (0 si está agotado).'
     if (form.batchPieces && !(Number(form.batchPieces) >= 1)) e['cost.batchPieces'] = 'Al menos 1 pieza por lote.'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -287,7 +293,23 @@ function ProductForm({ existing }: { existing?: Product }) {
 
           {/* Precio y detalles */}
           <fieldset className="panel">
-            <legend>Precio y detalles</legend>
+            <legend>Precio y stock</legend>
+            <label className="field">
+              <span>Stock disponible * <span className="muted small">(unidades listas para vender)</span></span>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                inputMode="numeric"
+                value={form.stock}
+                onChange={(e) => set('stock', e.target.value)}
+                placeholder="Ej: 5"
+              />
+              <span className="muted small">
+                Con 0 el producto aparece como “Agotado” en la tienda y no se puede agregar al carrito.
+              </span>
+              {errors.stock && <span className="field-error">{errors.stock}</span>}
+            </label>
             <div className="field-row">
               <label className="field">
                 Precio *
