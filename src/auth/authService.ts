@@ -94,3 +94,31 @@ export function getStoredSession(): Session | null {
   }
   return null
 }
+
+/**
+ * Renueva el token si ya pasó un día desde que se emitió (la sesión vuelve a durar 30 días completos).
+ * Se guarda en el mismo lugar donde estaba (localStorage o sessionStorage). Si falla, se mantiene la actual.
+ */
+export async function refreshIfNeeded(session: Session): Promise<Session | null> {
+  const remaining = session.expiresAt - Date.now()
+  if (remaining > RENEW_WHEN_LESS_THAN) return null
+  const res = await api<LoginResponse>('/api/auth/refresh', { method: 'POST', auth: true })
+  const renewed: Session = {
+    username: res.user.username,
+    name: res.user.name,
+    role: res.user.role,
+    token: res.token,
+    expiresAt: new Date(res.expiresAt).getTime(),
+  }
+  for (const s of stores()) {
+    try {
+      if (s.getItem(STORAGE_KEY)) s.setItem(STORAGE_KEY, JSON.stringify(renewed))
+    } catch {
+      /* ignorar */
+    }
+  }
+  return renewed
+}
+
+const DAY = 24 * 60 * 60 * 1000
+const RENEW_WHEN_LESS_THAN = 29 * DAY

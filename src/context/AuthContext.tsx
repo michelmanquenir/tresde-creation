@@ -11,6 +11,7 @@ type AuthValue = {
 }
 
 const AuthContext = createContext<AuthValue | null>(null)
+const DAY = 24 * 60 * 60 * 1000
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(auth.getStoredSession)
@@ -25,15 +26,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired)
   }, [])
 
-  // Cierra la sesión automáticamente cuando expira
+  // Renueva el token al abrir la tienda si ya pasó un día desde que se emitió: mientras entres al menos una vez
+  // cada 30 días, la sesión no se cierra.
+  const token = session?.token
+  useEffect(() => {
+    const current = auth.getStoredSession()
+    if (!current) return
+    let cancelled = false
+    auth
+      .refreshIfNeeded(current)
+      .then((renewed) => {
+        if (renewed && !cancelled) setSession(renewed)
+      })
+      .catch(() => {
+        /* sin conexión o servidor dormido: se sigue usando el token actual */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [token])
+
+  // Cierra la sesión automáticamente cuando expira.
+  // setTimeout no admite más de ~24,8 días, así que se revisa como máximo una vez al día.
+  const [tick, setTick] = useState(0)
   useEffect(() => {
     if (!session) return
+    const remaining = session.expiresAt - Date.now()
     const timer = setTimeout(() => {
-      auth.logout()
-      setSession(null)
-    }, Math.max(0, session.expiresAt - Date.now()))
+      if (Date.now() >= session.expiresAt) {
+        auth.logout()
+        setSession(null)
+      } else {
+        setTick((t) => t + 1)
+      }
+    }, Math.max(0, Math.min(remaining, DAY)))
     return () => clearTimeout(timer)
-  }, [session])
+  }, [session, tick])
 
   const value = useMemo<AuthValue>(
     () => ({
