@@ -55,10 +55,10 @@ export default function AdminDashboard() {
           <strong>Gestionar productos</strong>
           <span className="muted small">Edita precios, fotos y visibilidad.</span>
         </Link>
-        <Link to="/" className="dash-action">
-          <span className="dash-action-icon"><Icon name="cart" /></span>
-          <strong>Ver tienda</strong>
-          <span className="muted small">Mira la tienda como la ven tus clientes.</span>
+        <Link to="/admin/ventas?nueva=1" className="dash-action">
+          <span className="dash-action-icon"><Icon name="receipt" /></span>
+          <strong>Registrar venta</strong>
+          <span className="muted small">Anota una venta y descuenta el stock.</span>
         </Link>
       </div>
 

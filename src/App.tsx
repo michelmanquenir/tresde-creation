@@ -15,6 +15,7 @@ import Account from './pages/account/Account'
 import AdminLayout from './admin/AdminLayout'
 import AdminDashboard from './admin/AdminDashboard'
 import AdminSettings from './admin/AdminSettings'
+import AdminSales from './admin/AdminSales'
 import AdminProducts from './admin/AdminProducts'
 import AdminProductForm from './admin/AdminProductForm'
 import AdminLogin from './admin/AdminLogin'
@@ -87,6 +88,7 @@ export default function App() {
                 path="productos/:id/editar"
                 element={<KeyedById>{(id) => <AdminProductForm key={id} />}</KeyedById>}
               />
+              <Route path="ventas" element={<AdminSales />} />
               <Route path="configuracion" element={<AdminSettings />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>

@@ -235,6 +235,9 @@ export default function AdminProducts() {
                 >
                   <Icon name={p.hidden ? 'eyeOff' : 'eye'} size={18} />
                 </button>
+                <Link to={`/admin/ventas?producto=${encodeURIComponent(p.id)}`} className="icon-btn" title="Registrar venta" aria-label="Registrar venta">
+                  <Icon name="receipt" size={18} />
+                </Link>
                 <Link to={`/admin/productos/${p.id}/editar`} className="icon-btn" title="Editar" aria-label="Editar">
                   <Icon name="edit" size={18} />
                 </Link>

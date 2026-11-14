@@ -226,3 +226,56 @@
 .stock-note { font-size: .76rem; font-weight: 600; }
 .stock-note.is-out { color: #c0392b; }
 .stock-note.is-low { color: #a86400; }
+
+/* ───────── Ventas ───────── */
+.sale-form { margin-bottom: 20px; }
+.sale-form-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sale-form-head .legend { margin: 0; }
+.sale-form-grid { display: grid; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; }
+.sale-form-fields { display: grid; gap: 14px; min-width: 0; }
+.sale-form-summary { display: grid; gap: 14px; padding: 16px; border-radius: var(--radius-sm); background: var(--surface-2); }
+.sales-periods { margin-bottom: 16px; }
+.sales-stats > div { gap: 2px; }
+.sales-stats > div > span:first-child { font-weight: 600; color: var(--ink-2); }
+.sales-stats strong.is-loss, .sales-row .is-loss { color: #c0392b; }
+.sales-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; align-items: start; margin-bottom: 16px; }
+.sales-grid .legend { margin: 0; }
+.sales-sub { margin-top: 8px !important; }
+.sales-top li { grid-template-columns: minmax(100px, 1.2fr) 1.5fr auto; }
+
+/* Gráfico de barras: una sola serie, color de acento, tooltip al pasar el mouse */
+.sales-chart { position: relative; padding-top: 18px; }
+.sales-chart-max { position: absolute; top: 0; left: 0; font-size: .74rem; color: var(--ink-2); }
+.sales-chart-bars { display: flex; align-items: flex-end; gap: 2px; height: 200px; border-bottom: 1px solid var(--line); background: linear-gradient(var(--line), var(--line)) 0 0 / 100% 1px no-repeat; }
+.sales-chart-col { position: relative; flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; min-width: 0; outline: none; }
+.sales-chart-bar { width: 100%; max-width: 28px; min-height: 0; border-radius: 4px 4px 0 0; background: var(--accent); transition: opacity .15s; }
+.sales-chart-col:hover .sales-chart-bar, .sales-chart-col:focus-visible .sales-chart-bar { opacity: .75; }
+.sales-chart-label { position: absolute; top: calc(100% + 6px); font-size: .7rem; color: var(--ink-2); white-space: nowrap; }
+.sales-chart-bars { margin-bottom: 24px; }
+.sales-chart-tip { position: absolute; top: -8px; left: 50%; transform: translate(-50%, -100%); display: none; z-index: 2; background: var(--ink); color: var(--bg); padding: 6px 10px; border-radius: 8px; font-size: .76rem; white-space: nowrap; pointer-events: none; text-align: center; }
+.sales-chart-tip strong { display: block; font-size: .85rem; }
+.sales-chart-col:hover .sales-chart-tip, .sales-chart-col:focus-visible .sales-chart-tip { display: block; }
+
+/* Historial */
+.sales-history { margin-top: 0; }
+.sales-table { display: grid; }
+.sales-row { display: grid; grid-template-columns: 110px minmax(180px, 2fr) 1fr 1fr 110px 44px; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-size: .92rem; }
+.sales-row-head { border-top: 0; font-size: .74rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); }
+.sales-row .right { text-align: right; }
+.sales-product { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.sales-meta { display: block; }
+
+@media (max-width: 1024px) {
+  .sales-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 820px) {
+  .sale-form-grid { grid-template-columns: 1fr; }
+  .sales-row-head { display: none; }
+  .sales-row { grid-template-columns: 1fr auto; row-gap: 4px; }
+  .sales-row > :nth-child(1) { grid-column: 1; }
+  .sales-row > :nth-child(2) { grid-column: 1; }
+  .sales-row > :nth-child(3) { grid-column: 2; grid-row: 1; }
+  .sales-row > :nth-child(4) { grid-column: 2; grid-row: 2; }
+  .sales-row > :nth-child(5) { grid-column: 1; }
+  .sales-row > :nth-child(6) { grid-column: 2; grid-row: 3; }
+}

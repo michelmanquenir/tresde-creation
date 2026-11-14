@@ -32,6 +32,8 @@ const paths: Record<string, string> = {
   check: 'M5 12.5l4.5 4.5L19 7.5',
   user: 'M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM4 21a8 8 0 0 1 16 0',
   logout: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11',
+  chart: 'M4 20h16M7 16v-5M12 16V6M17 16v-8',
+  receipt: 'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3',
 }
 
 type Props = { name: string; size?: number; className?: string; filled?: boolean }

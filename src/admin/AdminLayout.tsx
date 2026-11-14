@@ -16,6 +16,7 @@ const MENU = [
     isActive: (p: string) => p.startsWith('/admin/productos') && p !== '/admin/productos/nuevo',
   },
   { to: '/admin/productos/nuevo', label: 'Nuevo producto', icon: 'plus', isActive: (p: string) => p === '/admin/productos/nuevo' },
+  { to: '/admin/ventas', label: 'Ventas', icon: 'chart', isActive: (p: string) => p === '/admin/ventas' },
   { to: '/admin/configuracion', label: 'Configuración', icon: 'gear', isActive: (p: string) => p === '/admin/configuracion' },
 ]
 
