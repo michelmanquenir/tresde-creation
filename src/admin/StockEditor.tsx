@@ -30,7 +30,7 @@ export default function StockEditor({ stock, disabled, onSave }: Props) {
 
   const tone = stock === 0 ? 'is-out' : stock <= LOW_STOCK ? 'is-low' : ''
   return (
-    <div className="stock-editor">
+    <div className="stock-editor" title={stock === 0 ? 'Agotado' : stock <= LOW_STOCK ? 'Quedan pocas unidades' : undefined}>
       <div className={`qty stock-qty ${tone}`}>
         <button type="button" disabled={disabled || stock === 0} onClick={() => onSave(stock - 1)} aria-label="Restar una unidad">
           <Icon name="minus" size={14} />
@@ -50,8 +50,6 @@ export default function StockEditor({ stock, disabled, onSave }: Props) {
           <Icon name="plus" size={14} />
         </button>
       </div>
-      {stock === 0 && <span className="stock-note is-out">Agotado</span>}
-      {stock > 0 && stock <= LOW_STOCK && <span className="stock-note is-low">Quedan pocas</span>}
     </div>
   )
 }

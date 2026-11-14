@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { categories, formatPrice, getCategory, type Product } from '../data/catalog'
+import { LOW_STOCK, categories, formatPrice, getCategory, type Product } from '../data/catalog'
 import { useProducts } from '../context/ProductsContext'
 import { adminApi } from '../api/products'
 import Icon from '../components/Icon'
@@ -217,6 +217,11 @@ export default function AdminProducts() {
               </span>
               <span role="cell" className="admin-badges">
                 {p.hidden ? <span className="tag tag-muted">Oculto</span> : <span className="tag tag-ok">Visible</span>}
+                {!p.stock ? (
+                  <span className="tag tag-out">Agotado</span>
+                ) : p.stock <= LOW_STOCK && (
+                  <span className="tag tag-low">Stock bajo</span>
+                )}
                 {p.isNew && <span className="tag tag-new">Nuevo</span>}
                 {p.bestSeller && <span className="tag tag-sale">Top</span>}
               </span>

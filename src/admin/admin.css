@@ -216,7 +216,8 @@
 .profit-hint.is-loss { color: #c0392b; }
 
 /* ───────── Stock ───────── */
-.stock-editor { display: grid; gap: 4px; justify-items: start; }
+.stock-editor { display: flex; align-items: center; }
+.tag-low { background: #fff1d6; color: #8a5200; }
 .stock-qty input { width: 44px; border: 0; background: transparent; text-align: center; font: inherit; font-size: .9rem; font-weight: 600; color: inherit; padding: 0; -moz-appearance: textfield; appearance: textfield; }
 .stock-qty input::-webkit-outer-spin-button, .stock-qty input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .stock-qty button:disabled { opacity: .35; cursor: default; background: transparent; }
