@@ -532,5 +532,5 @@ body { transition: background-color .25s, color .25s; }
 .stock-status.is-ok { color: #146c48; }
 .stock-status.is-low { color: #a86400; }
 .stock-status.is-out { color: #c0392b; }
-.stock-msg { display: block; font-size: .76rem; font-weight: 600; color: #a86400; margin-top: 4px; }
+.stock-msg { display: block; margin: 0; font-size: .82rem; font-weight: 600; color: #a86400; margin-top: 4px; }
 .stock-msg.is-out { color: #c0392b; }

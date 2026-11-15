@@ -31,7 +31,6 @@ export default function SaleForm({ products, settings, initialProductId, onSaved
   const [color, setColor] = useState(initial?.colors[0] ?? '')
   const [quantity, setQuantity] = useState('1')
   const [unitPrice, setUnitPrice] = useState(initial ? String(initial.price) : '')
-  const [discountStock, setDiscountStock] = useState(initial ? initial.stock > 0 : true)
   const [channel, setChannel] = useState<string>('WhatsApp')
   const [customer, setCustomer] = useState('')
   const [note, setNote] = useState('')
@@ -46,14 +45,13 @@ export default function SaleForm({ products, settings, initialProductId, onSaved
   const total = qty * price
   const cost = product && settings ? computeCost(product.cost, product.material, settings) : null
   const sale = cost && settings && price > 0 ? saleSummary(price, cost.total, settings) : null
-  const overStock = !!product && discountStock && qty > product.stock
+  const overStock = !!product && qty > product.stock
 
   const pickProduct = (id: string) => {
     const p = products.find((x) => x.id === id)
     setProductId(id)
     setColor(p?.colors[0] ?? '')
     setUnitPrice(p ? String(p.price) : '')
-    setDiscountStock(!!p && p.stock > 0)
     setErrors({})
   }
 
@@ -75,7 +73,6 @@ export default function SaleForm({ products, settings, initialProductId, onSaved
         color: color || undefined,
         quantity: qty,
         unitPrice: price,
-        discountStock,
         channel,
         customer: customer.trim() || undefined,
         note: note.trim() || undefined,
@@ -170,15 +167,12 @@ export default function SaleForm({ products, settings, initialProductId, onSaved
             </label>
           </div>
 
-          <label className="toggle">
-            <input type="checkbox" checked={discountStock} onChange={(e) => setDiscountStock(e.target.checked)} />
-            <span>
-              Descontar del stock
-              {product && <span className="muted small"> (quedan {product.stock}{discountStock && qty ? ` → ${Math.max(0, product.stock - qty)}` : ''})</span>}
-            </span>
-          </label>
-          {product && !discountStock && (
-            <p className="muted small">Úsalo para piezas impresas a pedido que no estaban en stock.</p>
+          {product && (
+            <p className={`stock-msg ${product.stock === 0 ? 'is-out' : ''}`}>
+              {product.stock === 0
+                ? 'Este producto no tiene stock. Si imprimiste más unidades, súmalas al stock antes de registrar la venta.'
+                : `Stock: ${product.stock} → ${Math.max(0, product.stock - qty)} después de esta venta`}
+            </p>
           )}
         </div>
 

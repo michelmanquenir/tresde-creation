@@ -24,7 +24,6 @@ export type SaleInput = {
   color?: string
   quantity: number
   unitPrice?: number
-  discountStock: boolean
   channel?: string
   customer?: string
   note?: string
