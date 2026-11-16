@@ -1,6 +1,6 @@
 import { useEffect, useState, type DragEvent, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { categories, formatPrice, MATERIALS, type Material, type Product } from '../data/catalog'
+import { categories, formatPrice, MATERIALS, type AccessoryUse, type Material, type Product } from '../data/catalog'
 import { useProducts } from '../context/ProductsContext'
 import { adminApi, type ProductInput } from '../api/products'
 import { ApiError } from '../api/client'
@@ -10,6 +10,8 @@ import ProductCard from '../components/ProductCard'
 import { useCostSettings } from '../api/settings'
 import { computeCost, formatCost, saleSummary } from '../utils/pricing'
 import CostLines from './CostLines'
+import AccessoryPicker from './AccessoryPicker'
+import { accessoriesCost, useAccessories } from '../api/accessories'
 
 const MAX_IMAGES = 6
 const PRESET_COLORS = ['#f4f1ea', '#2b2b2b', '#bdbdbd', '#e8443a', '#e86a3a', '#f2c14e', '#1e9e6a', '#3a7be8', '#7b4bd6', '#d4af37']
@@ -18,6 +20,7 @@ type FormState = {
   name: string
   category: string
   price: string
+  onSale: boolean // muestra el precio anterior tachado
   oldPrice: string
   description: string
   material: Material
@@ -33,13 +36,14 @@ type FormState = {
   grams: string
   batchHours: string
   batchPieces: string
-  accessoriesCost: string
+  accessories: AccessoryUse[]
 }
 
 const emptyForm: FormState = {
   name: '',
   category: 'figuras',
   price: '',
+  onSale: false,
   oldPrice: '',
   description: '',
   material: 'PLA',
@@ -54,7 +58,7 @@ const emptyForm: FormState = {
   grams: '',
   batchHours: '',
   batchPieces: '1',
-  accessoriesCost: '',
+  accessories: [],
 }
 
 const str = (n?: number) => (n === undefined || n === null ? '' : String(n))
@@ -63,6 +67,7 @@ const toForm = (p: Product): FormState => ({
   name: p.name,
   category: p.category,
   price: String(p.price),
+  onSale: !!p.oldPrice,
   oldPrice: p.oldPrice ? String(p.oldPrice) : '',
   description: p.description,
   material: p.material,
@@ -77,7 +82,7 @@ const toForm = (p: Product): FormState => ({
   grams: str(p.cost?.grams),
   batchHours: str(p.cost?.batchHours),
   batchPieces: str(p.cost?.batchPieces) || '1',
-  accessoriesCost: str(p.cost?.accessoriesCost),
+  accessories: p.cost?.accessories ?? [],
 })
 
 const num = (v: string) => (v.trim() === '' ? undefined : Number(v))
@@ -128,6 +133,7 @@ function ProductForm({ existing }: { existing?: Product }) {
   const [saving, setSaving] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
   const costSettings = useCostSettings()
+  const accessoryCatalog = useAccessories()
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }))
 
@@ -181,7 +187,7 @@ function ProductForm({ existing }: { existing?: Product }) {
     name: form.name.trim(),
     category: form.category,
     price: Number(form.price) || 0,
-    oldPrice: num(form.oldPrice),
+    oldPrice: form.onSale ? num(form.oldPrice) : undefined,
     description: form.description.trim(),
     material: form.material,
     heightCm: num(form.heightCm),
@@ -196,7 +202,7 @@ function ProductForm({ existing }: { existing?: Product }) {
       grams: num(form.grams),
       batchHours: num(form.batchHours),
       batchPieces: num(form.batchPieces) ?? 1,
-      accessoriesCost: num(form.accessoriesCost),
+      accessories: form.accessories,
     },
   })
 
@@ -204,8 +210,8 @@ function ProductForm({ existing }: { existing?: Product }) {
     const e: Record<string, string> = {}
     if (!form.name.trim()) e.name = 'Escribe un nombre.'
     if (!(Number(form.price) > 0)) e.price = 'El precio debe ser mayor a 0.'
-    if (form.oldPrice && !(Number(form.oldPrice) > Number(form.price)))
-      e.oldPrice = 'El precio anterior debe ser mayor al precio actual.'
+    if (form.onSale && !(Number(form.oldPrice) > Number(form.price)))
+      e.oldPrice = 'El precio anterior debe ser mayor al precio de oferta.'
     if (!form.description.trim()) e.description = 'Agrega una descripción.'
     if (!form.colors.length) e.colors = 'Agrega al menos un color.'
     if (form.stock.trim() === '' || !Number.isInteger(Number(form.stock)) || Number(form.stock) < 0)
@@ -237,7 +243,11 @@ function ProductForm({ existing }: { existing?: Product }) {
   }
 
   // Costo y ganancia en vivo con la configuración del panel
-  const cost = costSettings ? computeCost(toInput().cost, form.material, costSettings) : null
+  const cost = costSettings ? computeCost(
+        { ...toInput().cost, accessoriesCost: accessoriesCost(form.accessories, accessoryCatalog ?? []) },
+        form.material,
+        costSettings,
+      ) : null
   const price = Number(form.price) || 0
   const sale = cost && costSettings && price > 0 ? saleSummary(price, cost.total, costSettings) : null
 
@@ -257,18 +267,18 @@ function ProductForm({ existing }: { existing?: Product }) {
 
       <form className="admin-form" onSubmit={onSubmit} noValidate>
         <div className="admin-form-main">
-          {/* Información básica */}
+          {/* Producto */}
           <fieldset className="panel">
-            <legend>Información</legend>
+            <legend>Producto</legend>
             <label className="field">
               Nombre *
-              <input value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ej: Dragón articulado" />
+              <input value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ej: Llavero Naruto" />
               {errors.name && <span className="field-error">{errors.name}</span>}
             </label>
             <label className="field">
               Descripción *
               <textarea
-                rows={4}
+                rows={3}
                 value={form.description}
                 onChange={(e) => set('description', e.target.value)}
                 placeholder="Tamaño, detalles, si viene pintada o lista para pintar…"
@@ -289,116 +299,6 @@ function ProductForm({ existing }: { existing?: Product }) {
                 </select>
               </label>
             </div>
-          </fieldset>
-
-          {/* Precio y detalles */}
-          <fieldset className="panel">
-            <legend>Precio y stock</legend>
-            <label className="field">
-              <span>Stock disponible * <span className="muted small">(unidades listas para vender)</span></span>
-              <input
-                type="number"
-                min={0}
-                step={1}
-                inputMode="numeric"
-                value={form.stock}
-                onChange={(e) => set('stock', e.target.value)}
-                placeholder="Ej: 5"
-              />
-              <span className="muted small">
-                Con 0 el producto aparece como “Agotado” en la tienda y no se puede agregar al carrito.
-              </span>
-              {errors.stock && <span className="field-error">{errors.stock}</span>}
-            </label>
-            <div className="field-row">
-              <label className="field">
-                Precio *
-                <input type="number" min={0} step={10} inputMode="numeric" value={form.price} onChange={(e) => set('price', e.target.value)} placeholder="18990" />
-                {errors.price && <span className="field-error">{errors.price}</span>}
-              </label>
-              <label className="field">
-                <span>Precio anterior <span className="muted small">(oferta, opcional)</span></span>
-                <input type="number" min={0} step={10} inputMode="numeric" value={form.oldPrice} onChange={(e) => set('oldPrice', e.target.value)} />
-                {errors.oldPrice && <span className="field-error">{errors.oldPrice}</span>}
-              </label>
-            </div>
-            <div className="field-row">
-              <label className="field">
-                Altura (cm)
-                <input type="number" min={0} step={0.5} value={form.heightCm} onChange={(e) => set('heightCm', e.target.value)} placeholder="12" />
-                {errors.heightCm && <span className="field-error">{errors.heightCm}</span>}
-              </label>
-              <label className="field">
-                Horas de impresión
-                <input type="number" min={0} step={0.5} value={form.printHours} onChange={(e) => set('printHours', e.target.value)} placeholder="8" />
-                {errors.printHours && <span className="field-error">{errors.printHours}</span>}
-              </label>
-            </div>
-          </fieldset>
-
-          {/* Costos */}
-          <fieldset className="panel">
-            <legend>Costos <span className="muted small">(solo los ves tú)</span></legend>
-            <div className="field-row">
-              <label className="field">
-                Gramos por pieza
-                <input type="number" min={0} step={0.5} inputMode="decimal" value={form.grams} onChange={(e) => set('grams', e.target.value)} placeholder="Ej: 11" />
-                {errors['cost.grams'] && <span className="field-error">{errors['cost.grams']}</span>}
-              </label>
-              <label className="field">
-                <span>Accesorios por pieza <span className="muted small">($)</span></span>
-                <input type="number" min={0} step={10} inputMode="numeric" value={form.accessoriesCost} onChange={(e) => set('accessoriesCost', e.target.value)} placeholder="Ej: 30" />
-                {errors['cost.accessoriesCost'] && <span className="field-error">{errors['cost.accessoriesCost']}</span>}
-              </label>
-            </div>
-            <div className="field-row">
-              <label className="field">
-                Horas de impresión del lote
-                <input type="number" min={0} step={0.5} inputMode="decimal" value={form.batchHours} onChange={(e) => set('batchHours', e.target.value)} placeholder="Ej: 7" />
-                {errors['cost.batchHours'] && <span className="field-error">{errors['cost.batchHours']}</span>}
-              </label>
-              <label className="field">
-                Piezas en ese lote
-                <input type="number" min={1} step={1} inputMode="numeric" value={form.batchPieces} onChange={(e) => set('batchPieces', e.target.value)} />
-                {errors['cost.batchPieces'] && <span className="field-error">{errors['cost.batchPieces']}</span>}
-              </label>
-            </div>
-            <p className="muted small">
-              Si imprimes varias piezas a la vez, pon el tiempo total y cuántas salen: el costo de máquina se reparte entre ellas.
-            </p>
-
-            {!costSettings ? (
-              <p className="muted small">Cargando configuración de costos…</p>
-            ) : !cost ? (
-              <p className="muted small">Completa los gramos y las horas para ver el costo y el precio sugerido.</p>
-            ) : (
-              <div className="cost-summary">
-                <CostLines cost={cost} />
-                <div className="cost-suggested">
-                  <div>
-                    <span className="muted small">Precio sugerido (costo × {costSettings.priceMultiplier})</span>
-                    <strong>{formatPrice(cost.suggested)}</strong>
-                  </div>
-                  {price !== cost.suggested && (
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => set('price', String(cost.suggested))}>
-                      Usar este precio
-                    </button>
-                  )}
-                </div>
-                {sale && (
-                  <dl className="cost-lines">
-                    <div><dt>Precio de venta</dt><dd>{formatPrice(price)}</dd></div>
-                    <div><dt>Costo</dt><dd>−{formatCost(cost.total)}</dd></div>
-                    <div><dt>Para la máquina ({costSettings.machineReservePercent}%)</dt><dd>−{formatCost(sale.reserve)}</dd></div>
-                    <div className={`cost-total ${sale.profit < 0 ? 'is-loss' : ''}`}>
-                      <dt>Ganancia por pieza</dt>
-                      <dd>{formatCost(sale.profit)} <span className="muted small">({Math.round(sale.margin * 100)}%)</span></dd>
-                    </div>
-                  </dl>
-                )}
-                {sale && sale.profit < 0 && <div className="alert">Con este precio pierdes dinero en cada venta.</div>}
-              </div>
-            )}
           </fieldset>
 
           {/* Fotos */}
@@ -493,8 +393,100 @@ function ProductForm({ existing }: { existing?: Product }) {
             </div>
             {errors.colors && <span className="field-error">{errors.colors}</span>}
           </fieldset>
-        </div>
 
+          {/* Costos: primero, porque de aquí sale el precio sugerido */}
+          <fieldset className="panel">
+            <legend>Costo <span className="muted small">(solo lo ves tú)</span></legend>
+            <div className="field-row field-row-3">
+              <label className="field">
+                Gramos por pieza
+                <input type="number" min={0} step={0.5} inputMode="decimal" value={form.grams} onChange={(e) => set('grams', e.target.value)} placeholder="Ej: 11" />
+                {errors['cost.grams'] && <span className="field-error">{errors['cost.grams']}</span>}
+              </label>
+              <label className="field">
+                Horas del lote
+                <input type="number" min={0} step={0.5} inputMode="decimal" value={form.batchHours} onChange={(e) => set('batchHours', e.target.value)} placeholder="Ej: 7" />
+                {errors['cost.batchHours'] && <span className="field-error">{errors['cost.batchHours']}</span>}
+              </label>
+              <label className="field">
+                Piezas del lote
+                <input type="number" min={1} step={1} inputMode="numeric" value={form.batchPieces} onChange={(e) => set('batchPieces', e.target.value)} />
+                {errors['cost.batchPieces'] && <span className="field-error">{errors['cost.batchPieces']}</span>}
+              </label>
+            </div>
+            <p className="muted small field-hint">Si imprimes varias a la vez, pon el tiempo total y cuántas salen.</p>
+
+            <AccessoryPicker value={form.accessories} catalog={accessoryCatalog} onChange={(v) => set('accessories', v)} />
+
+            {costSettings && cost && <CostLines cost={cost} />}
+          </fieldset>
+
+          {/* Precio y stock */}
+          <fieldset className="panel">
+            <legend>Precio y stock</legend>
+            <div className="field-row">
+              <label className="field">
+                {form.onSale ? 'Precio de oferta *' : 'Precio *'}
+                <input type="number" min={0} step={10} inputMode="numeric" value={form.price} onChange={(e) => set('price', e.target.value)} placeholder="Ej: 1000" />
+                {errors.price && <span className="field-error">{errors.price}</span>}
+              </label>
+              <label className="field">
+                Stock *
+                <input type="number" min={0} step={1} inputMode="numeric" value={form.stock} onChange={(e) => set('stock', e.target.value)} placeholder="Ej: 5" />
+                {errors.stock && <span className="field-error">{errors.stock}</span>}
+              </label>
+            </div>
+
+            {costSettings && cost && (
+              <div className="price-helper">
+                <span>
+                  Sugerido <strong>{formatPrice(cost.suggested)}</strong>
+                  <span className="muted small"> (costo × {costSettings.priceMultiplier})</span>
+                </span>
+                {price !== cost.suggested && (
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => set('price', String(cost.suggested))}>
+                    Usar
+                  </button>
+                )}
+                {sale && (
+                  <span className={`price-helper-profit ${sale.profit < 0 ? 'is-loss' : ''}`}>
+                    Ganas {formatCost(sale.profit)} por pieza <span className="muted small">({Math.round(sale.margin * 100)}%, ya descontado el {costSettings.machineReservePercent}% de la máquina)</span>
+                  </span>
+                )}
+              </div>
+            )}
+            {sale && sale.profit < 0 && <div className="alert">Con este precio pierdes dinero en cada venta.</div>}
+
+            <label className="toggle">
+              <input type="checkbox" checked={form.onSale} onChange={(e) => set('onSale', e.target.checked)} />
+              <span>Está en oferta <span className="muted small">(muestra el precio anterior tachado)</span></span>
+            </label>
+            {form.onSale && (
+              <label className="field">
+                Precio anterior (sin oferta)
+                <input type="number" min={0} step={10} inputMode="numeric" value={form.oldPrice} onChange={(e) => set('oldPrice', e.target.value)} placeholder="Ej: 1500" />
+                {errors.oldPrice && <span className="field-error">{errors.oldPrice}</span>}
+              </label>
+            )}
+          </fieldset>
+
+          {/* Datos opcionales para la ficha de la tienda */}
+          <details className="panel more-details" open={!!(form.heightCm || form.printHours) || !!errors.heightCm || !!errors.printHours}>
+            <summary>Más detalles <span className="muted small">(opcional · se muestran en la tienda)</span></summary>
+            <div className="field-row">
+              <label className="field">
+                Altura (cm)
+                <input type="number" min={0} step={0.5} value={form.heightCm} onChange={(e) => set('heightCm', e.target.value)} placeholder="Ej: 12" />
+                {errors.heightCm && <span className="field-error">{errors.heightCm}</span>}
+              </label>
+              <label className="field">
+                Tiempo de impresión (h)
+                <input type="number" min={0} step={0.5} value={form.printHours} onChange={(e) => set('printHours', e.target.value)} placeholder="Ej: 8" />
+                {errors.printHours && <span className="field-error">{errors.printHours}</span>}
+              </label>
+            </div>
+          </details>
+        </div>
         <aside className="admin-form-side">
           <fieldset className="panel">
             <legend>Visibilidad</legend>

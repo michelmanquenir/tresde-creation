@@ -17,6 +17,7 @@ const MENU = [
   },
   { to: '/admin/productos/nuevo', label: 'Nuevo producto', icon: 'plus', isActive: (p: string) => p === '/admin/productos/nuevo' },
   { to: '/admin/ventas', label: 'Ventas', icon: 'chart', isActive: (p: string) => p === '/admin/ventas' },
+  { to: '/admin/accesorios', label: 'Accesorios', icon: 'key', isActive: (p: string) => p === '/admin/accesorios' },
   { to: '/admin/configuracion', label: 'Configuración', icon: 'gear', isActive: (p: string) => p === '/admin/configuracion' },
 ]
 

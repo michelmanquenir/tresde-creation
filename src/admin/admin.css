@@ -67,10 +67,10 @@
 .panel { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: grid; gap: 14px; min-width: 0; }
 .panel legend, .panel .legend { font-family: var(--display); font-weight: 600; font-size: 1.05rem; padding: 0; float: left; width: 100%; }
 .field { display: grid; gap: 6px; font-weight: 500; font-size: .9rem; }
-.field input, .field select, .field textarea, .url-row input {
+.field input, .field select, .field textarea, .url-row input, .acc-row input, .acc-picker select {
   padding: 11px 13px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--bg); font-weight: 400; width: 100%;
 }
-.field input:focus, .field select:focus, .field textarea:focus, .url-row input:focus { outline: none; border-color: var(--ink); }
+.field input:focus, .field select:focus, .field textarea:focus, .url-row input:focus, .acc-row input:focus, .acc-picker select:focus { outline: none; border-color: var(--ink); }
 .field textarea { resize: vertical; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .field-error { color: #c0392b; font-size: .82rem; font-weight: 500; }
@@ -278,4 +278,45 @@
   .sales-row > :nth-child(4) { grid-column: 2; grid-row: 2; }
   .sales-row > :nth-child(5) { grid-column: 1; }
   .sales-row > :nth-child(6) { grid-column: 2; grid-row: 3; }
+}
+
+/* ───────── Formulario de producto simplificado ───────── */
+.field-row-3 { grid-template-columns: repeat(3, 1fr); }
+.field-hint { margin: -6px 0 0; }
+.price-helper { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: .92rem; }
+.price-helper-profit { flex-basis: 100%; color: #146c48; font-weight: 600; }
+.price-helper-profit.is-loss { color: #c0392b; }
+.more-details { gap: 0; }
+.more-details > summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; align-items: center; gap: 6px; }
+.more-details > summary::-webkit-details-marker { display: none; }
+.more-details > summary::before { content: '▸'; transition: transform .15s; color: var(--ink-2); }
+.more-details[open] > summary::before { transform: rotate(90deg); }
+.more-details[open] > summary { margin-bottom: 14px; }
+
+/* Selector de accesorios */
+.acc-picker { display: grid; gap: 8px; }
+.acc-picker-label { font-size: .92rem; font-weight: 500; }
+.acc-picked { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.acc-picked li { display: grid; grid-template-columns: 1fr auto 70px auto; align-items: center; gap: 10px; padding: 6px 6px 6px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: .92rem; }
+.acc-picked-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acc-picked-cost { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+
+/* Página de accesorios */
+.acc-new { margin-bottom: 16px; }
+.acc-new .legend { margin: 0; }
+.acc-new-row { display: grid; grid-template-columns: 2fr 1fr auto; gap: 12px; align-items: end; }
+.acc-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.acc-table { display: grid; }
+.acc-row { display: grid; grid-template-columns: minmax(160px, 2fr) 140px 1fr auto; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.acc-row-head { border-top: 0; font-size: .74rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); }
+.acc-row input { width: 100%; }
+.acc-cost { display: flex; align-items: center; gap: 4px; }
+.acc-actions { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+
+@media (max-width: 820px) {
+  .field-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .acc-new-row { grid-template-columns: 1fr; }
+  .acc-row-head { display: none; }
+  .acc-row { grid-template-columns: 1fr 110px auto; }
+  .acc-row > :nth-child(3) { display: none; }
 }

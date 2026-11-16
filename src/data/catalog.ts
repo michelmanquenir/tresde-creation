@@ -11,12 +11,16 @@ export type Category = {
 export const MATERIALS = ['PLA', 'PETG', 'Resina', 'TPU'] as const
 export type Material = (typeof MATERIALS)[number]
 
+/** Accesorio del catálogo que lleva una pieza (y cuántos). */
+export type AccessoryUse = { accessoryId: number; quantity: number }
+
 /** Datos para calcular el costo (solo panel). Ver utils/pricing.ts */
 export type ProductCost = {
   grams?: number // filamento por pieza
   batchHours?: number // horas que tarda el lote completo
   batchPieces?: number // piezas que salen en ese lote
-  accessoriesCost?: number // argollas, imanes, etc. por pieza
+  accessories?: AccessoryUse[] // accesorios que lleva cada pieza
+  accessoriesCost?: number // suma de sus costos (la calcula el backend; en el formulario, el panel)
 }
 
 export type Product = {
