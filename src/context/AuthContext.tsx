@@ -6,7 +6,6 @@ import { AUTH_EXPIRED_EVENT } from '../api/client'
 type AuthValue = {
   session: Session | null
   login: (username: string, password: string, remember: boolean) => Promise<Session>
-  register: (name: string, email: string, password: string, remember: boolean) => Promise<Session>
   logout: () => void
 }
 
@@ -68,11 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       login: async (username, password, remember) => {
         const s = await auth.login(username, password, remember)
-        setSession(s)
-        return s
-      },
-      register: async (name, email, password, remember) => {
-        const s = await auth.register(name, email, password, remember)
         setSession(s)
         return s
       },

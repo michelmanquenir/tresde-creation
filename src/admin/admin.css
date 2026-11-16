@@ -320,3 +320,28 @@
   .acc-row { grid-template-columns: 1fr 110px auto; }
   .acc-row > :nth-child(3) { display: none; }
 }
+
+/* ───────── Usuarios del panel ───────── */
+.tag-admin { background: var(--ink); color: var(--bg); }
+.tag-staff { background: #e6f0ff; color: #1f4f9a; }
+.user-new { margin-bottom: 16px; }
+.user-new .legend { margin: 0; }
+.user-new-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.user-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.user-item { border-top: 1px solid var(--line); padding: 10px 0; }
+.user-item:first-child { border-top: 0; }
+.user-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.user-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.user-info > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-actions { display: flex; gap: 4px; }
+.user-edit { display: grid; grid-template-columns: 1fr 160px 1fr auto; gap: 12px; align-items: end; margin-top: 12px; padding: 12px; border-radius: 12px; background: var(--surface-2); }
+.user-edit > p { grid-column: 1 / -1; margin: 0; }
+.user-edit-actions { display: flex; gap: 6px; padding-bottom: 2px; }
+@media (max-width: 860px) {
+  .user-new-grid, .user-edit { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .user-new-grid, .user-edit { grid-template-columns: 1fr; }
+  .user-main { flex-wrap: wrap; }
+  .user-info { flex-basis: calc(100% - 46px); }
+}

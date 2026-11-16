@@ -1,10 +1,16 @@
-// Autenticación contra el backend: POST /api/auth/login y /api/auth/register devuelven un token JWT.
+// Autenticación contra el backend: POST /api/auth/login devuelve un token JWT.
 // El token se guarda en el navegador y se envía en las peticiones que lo requieren.
-// La misma sesión sirve para el administrador (role ADMIN) y para los clientes (role CUSTOMER).
+// Las cuentas las crea el administrador en el panel (Usuarios): ADMIN (todo) o STAFF (trabajador).
+// CUSTOMER queda solo para cuentas de clientes antiguas (sin acceso al panel).
 
 import { api } from '../api/client'
 
-export type Role = 'ADMIN' | 'CUSTOMER'
+export type Role = 'ADMIN' | 'STAFF' | 'CUSTOMER'
+
+/** Administradores y trabajadores entran al panel. */
+export const canUsePanel = (role?: Role | null) => role === 'ADMIN' || role === 'STAFF'
+
+export const ROLE_LABEL: Record<Role, string> = { ADMIN: 'Administrador', STAFF: 'Trabajador', CUSTOMER: 'Cliente' }
 
 export type Session = {
   username: string // en los clientes es su correo
@@ -35,17 +41,6 @@ export function login(username: string, password: string, remember: boolean): Pr
     api<LoginResponse>('/api/auth/login', {
       method: 'POST',
       body: { username: username.trim(), password },
-    }),
-    remember,
-  )
-}
-
-/** Crea una cuenta de cliente y deja la sesión iniciada. */
-export function register(name: string, email: string, password: string, remember: boolean): Promise<Session> {
-  return startSession(
-    api<LoginResponse>('/api/auth/register', {
-      method: 'POST',
-      body: { name: name.trim(), email: email.trim(), password },
     }),
     remember,
   )

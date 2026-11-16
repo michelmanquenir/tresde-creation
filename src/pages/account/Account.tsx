@@ -1,5 +1,6 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { canUsePanel } from '../../auth/authService'
 import Icon from '../../components/Icon'
 import './account.css'
 
@@ -27,7 +28,7 @@ export default function Account() {
           </div>
         </div>
         <div className="account-actions">
-          {session.role === 'ADMIN' && (
+          {canUsePanel(session.role) && (
             <Link to="/admin" className="btn btn-primary">
               <Icon name="gear" size={18} /> Panel de administración
             </Link>

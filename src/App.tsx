@@ -17,6 +17,7 @@ import AdminDashboard from './admin/AdminDashboard'
 import AdminSettings from './admin/AdminSettings'
 import AdminSales from './admin/AdminSales'
 import AdminAccessories from './admin/AdminAccessories'
+import AdminUsers from './admin/AdminUsers'
 import AdminProducts from './admin/AdminProducts'
 import AdminProductForm from './admin/AdminProductForm'
 import AdminLogin from './admin/AdminLogin'
@@ -68,8 +69,9 @@ export default function App() {
               <Route path="/producto/:id" element={<KeyedById>{(id) => <ProductPage key={id} />}</KeyedById>} />
               <Route path="/personalizado" element={<CustomOrder />} />
               <Route path="/cuenta" element={<Account />} />
-              <Route path="/cuenta/ingresar" element={<AccountAuth key="login" mode="login" />} />
-              <Route path="/cuenta/registro" element={<AccountAuth key="register" mode="register" />} />
+              <Route path="/cuenta/ingresar" element={<AccountAuth />} />
+              {/* Ya no hay registro público: el enlace antiguo lleva al login */}
+              <Route path="/cuenta/registro" element={<Navigate to="/cuenta/ingresar" replace />} />
               <Route path="*" element={<NotFound />} />
             </Route>
 
@@ -91,7 +93,8 @@ export default function App() {
               />
               <Route path="ventas" element={<AdminSales />} />
               <Route path="accesorios" element={<AdminAccessories />} />
-              <Route path="configuracion" element={<AdminSettings />} />
+              <Route path="configuracion" element={<RequireAuth adminOnly><AdminSettings /></RequireAuth>} />
+              <Route path="usuarios" element={<RequireAuth adminOnly><AdminUsers /></RequireAuth>} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>
           </Routes>

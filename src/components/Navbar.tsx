@@ -3,13 +3,14 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { categories, STORE_NAME } from '../data/catalog'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
+import { canUsePanel } from '../auth/authService'
 import Icon from './Icon'
 import ThemePicker from './ThemePicker'
 
 export default function Navbar() {
   const { count, open } = useCart()
   const { session } = useAuth()
-  const isAdmin = session?.role === 'ADMIN'
+  const isAdmin = canUsePanel(session?.role)
   const accountPath = isAdmin ? '/admin' : session ? '/cuenta' : '/cuenta/ingresar'
   const accountLabel = isAdmin
     ? 'Panel de administración'

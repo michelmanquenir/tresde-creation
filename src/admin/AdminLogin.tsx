@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { STORE_NAME } from '../data/catalog'
 import { useAuth } from '../context/AuthContext'
+import { canUsePanel } from '../auth/authService'
 import Icon from '../components/Icon'
 import './admin.css'
 
@@ -17,8 +18,8 @@ export default function AdminLogin() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Si ya hay sesión de administrador, no tiene sentido mostrar el login
-  if (session?.role === 'ADMIN') return <Navigate to={from} replace />
+  // Si ya hay sesión de administrador o trabajador, no tiene sentido mostrar el login
+  if (canUsePanel(session?.role)) return <Navigate to={from} replace />
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -30,7 +31,7 @@ export default function AdminLogin() {
     setLoading(true)
     try {
       const s = await login(username, password, remember)
-      if (s.role !== 'ADMIN') {
+      if (!canUsePanel(s.role)) {
         setError('Esta cuenta no tiene acceso al panel de administración.')
         setLoading(false)
         return
@@ -62,7 +63,7 @@ export default function AdminLogin() {
               autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin"
+              placeholder="tu usuario"
             />
           </label>
           <label className="field">

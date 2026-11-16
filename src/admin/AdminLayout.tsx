@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { STORE_NAME } from '../data/catalog'
 import { useAuth } from '../context/AuthContext'
+import { ROLE_LABEL } from '../auth/authService'
 import Icon from '../components/Icon'
 import ThemePicker from '../components/ThemePicker'
 import './admin.css'
 
 // Menú del panel. "Productos" queda activo también al editar un producto.
+// adminOnly: solo lo ve el administrador (los trabajadores no).
 const MENU = [
   { to: '/admin', label: 'Inicio', icon: 'home', isActive: (p: string) => p === '/admin' },
   {
@@ -18,7 +20,8 @@ const MENU = [
   { to: '/admin/productos/nuevo', label: 'Nuevo producto', icon: 'plus', isActive: (p: string) => p === '/admin/productos/nuevo' },
   { to: '/admin/ventas', label: 'Ventas', icon: 'chart', isActive: (p: string) => p === '/admin/ventas' },
   { to: '/admin/accesorios', label: 'Accesorios', icon: 'key', isActive: (p: string) => p === '/admin/accesorios' },
-  { to: '/admin/configuracion', label: 'Configuración', icon: 'gear', isActive: (p: string) => p === '/admin/configuracion' },
+  { to: '/admin/usuarios', label: 'Usuarios', icon: 'user', isActive: (p: string) => p === '/admin/usuarios', adminOnly: true },
+  { to: '/admin/configuracion', label: 'Configuración', icon: 'gear', isActive: (p: string) => p === '/admin/configuracion', adminOnly: true },
 ]
 
 export default function AdminLayout() {
@@ -63,7 +66,7 @@ export default function AdminLayout() {
         {/* En móvil, el menú se cierra al elegir una opción */}
         <nav className="admin-menu" onClick={(e) => (e.target as Element).closest('a') && setMenuOpen(false)}>
           <p className="admin-menu-label">Gestión</p>
-          {MENU.map((item) => (
+          {MENU.filter((item) => !('adminOnly' in item) || session?.role === 'ADMIN').map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -85,7 +88,7 @@ export default function AdminLayout() {
             <span className="admin-avatar" aria-hidden="true">{session?.name.charAt(0)}</span>
             <div>
               <strong>{session?.name}</strong>
-              <span>{session?.username}</span>
+              <span>{session ? ROLE_LABEL[session.role] : ''} · {session?.username}</span>
             </div>
             <ThemePicker className="on-dark admin-sidebar-theme" />
           </div>
