@@ -11,6 +11,8 @@ import {
   buckets,
   byChannel,
   periodRange,
+  saleCost,
+  saleCostParts,
   saleProfit,
   saleRevenue,
   topProducts,
@@ -101,9 +103,11 @@ export default function AdminSales() {
   }
 
   const onExport = () => {
-    const head = ['Fecha', 'Producto', 'Color', 'Cantidad', 'Precio unitario', 'Total', 'Costo unitario', '% máquina', 'Ganancia', 'Canal', 'Cliente', 'Nota']
+    const head = ['Fecha', 'Producto', 'Color', 'Cantidad', 'Precio unitario', 'Total', 'Costo unitario', 'Materia prima', 'Electricidad', 'Costo total', '% máquina', 'Ganancia', 'Canal', 'Cliente', 'Nota']
     const rows = list.map((s) => {
       const profit = saleProfit(s)
+      const parts = saleCostParts(s)
+      const cost = saleCost(s)
       return [
         new Date(s.soldAt).toLocaleDateString('es-CL'),
         s.productName,
@@ -112,6 +116,9 @@ export default function AdminSales() {
         s.unitPrice,
         saleRevenue(s),
         s.unitCost === undefined ? '' : Math.round(s.unitCost),
+        parts ? Math.round(parts.materials) : '',
+        parts ? Math.round(parts.electricity) : '',
+        cost === null ? '' : Math.round(cost),
         s.reservePercent,
         profit === null ? '' : Math.round(profit),
         s.channel ?? '',
@@ -169,6 +176,15 @@ export default function AdminSales() {
           <span>Ingresos</span>
           <strong>{sales ? formatPrice(t.revenue) : '–'}</strong>
           <span className="muted small">{t.count} {t.count === 1 ? 'venta' : 'ventas'} · ticket prom. {formatPrice(Math.round(t.avgTicket))}</span>
+        </div>
+        <div>
+          <span>Costos</span>
+          <strong>{sales ? formatCost(Math.round(t.cost)) : '–'}</strong>
+          <span className="muted small">
+            {t.cost > 0
+              ? `materia prima ${formatCost(Math.round(t.materials))} · luz ${formatCost(Math.round(t.electricity))}${t.costNoBreakdown ? ` · sin desglose ${formatCost(Math.round(t.costNoBreakdown))}` : ''}`
+              : 'filamento, accesorios y luz'}
+          </span>
         </div>
         <div>
           <span>Ganancia</span>
@@ -262,12 +278,15 @@ export default function AdminSales() {
               <span role="columnheader">Fecha</span>
               <span role="columnheader">Producto</span>
               <span role="columnheader" className="right">Total</span>
+              <span role="columnheader" className="right">Costo</span>
               <span role="columnheader" className="right">Ganancia</span>
               <span role="columnheader">Canal</span>
               <span role="columnheader" />
             </div>
             {list.map((s) => {
               const profit = saleProfit(s)
+              const cost = saleCost(s)
+              const parts = saleCostParts(s)
               return (
                 <div key={s.id} className="sales-row" role="row">
                   <span role="cell" className="muted small">{dateFmt.format(new Date(s.soldAt))}</span>
@@ -284,6 +303,20 @@ export default function AdminSales() {
                   <span role="cell" className="right">
                     <strong>{formatPrice(saleRevenue(s))}</strong>
                     {s.quantity > 1 && <span className="muted small sales-meta">{formatPrice(s.unitPrice)} c/u</span>}
+                  </span>
+                  <span role="cell" className="right">
+                    {cost === null ? (
+                      <span className="muted small">—</span>
+                    ) : (
+                      <>
+                        −{formatCost(Math.round(cost))}
+                        {parts && (
+                          <span className="muted small sales-meta" title="Materia prima (filamento + accesorios) · electricidad">
+                            MP {formatCost(Math.round(parts.materials))} · luz {formatCost(Math.round(parts.electricity))}
+                          </span>
+                        )}
+                      </>
+                    )}
                   </span>
                   <span role="cell" className={`right ${profit !== null && profit < 0 ? 'is-loss' : ''}`}>
                     {profit === null ? <span className="muted small">Sin costos</span> : formatCost(Math.round(profit))}

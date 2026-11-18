@@ -181,7 +181,8 @@ export default function SaleForm({ products, settings, initialProductId, onSaved
             <div><dt>Total de la venta</dt><dd><strong>{formatPrice(total)}</strong></dd></div>
             {sale && cost ? (
               <>
-                <div><dt>Costo ({qty} × {formatCost(cost.total)})</dt><dd>−{formatCost(cost.total * qty)}</dd></div>
+                <div><dt>Materia prima <span className="muted small">(filamento + accesorios)</span></dt><dd>−{formatCost((cost.filament + cost.accessories) * qty)}</dd></div>
+                <div><dt>Electricidad</dt><dd>−{formatCost(cost.machine * qty)}</dd></div>
                 <div><dt>Para la máquina ({settings?.machineReservePercent}%)</dt><dd>−{formatCost(sale.reserve * qty)}</dd></div>
                 <div className={`cost-total ${sale.profit < 0 ? 'is-loss' : ''}`}>
                   <dt>Ganancia</dt><dd>{formatCost(sale.profit * qty)}</dd>

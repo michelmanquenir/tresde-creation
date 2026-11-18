@@ -2,6 +2,7 @@
 //
 //   ingreso  = cantidad × precio unitario
 //   costo    = cantidad × costo unitario (congelado al vender; puede faltar)
+//              = materia prima (filamento + accesorios) + electricidad
 //   máquina  = ingreso × % máquina
 //   ganancia = ingreso − costo − máquina   (solo de las ventas con costo conocido)
 
@@ -42,18 +43,34 @@ export const saleReserve = (s: Sale) => (saleRevenue(s) * s.reservePercent) / 10
 export const saleProfit = (s: Sale) =>
   s.unitCost === undefined || s.unitCost === null ? null : saleRevenue(s) - s.unitCost * s.quantity - saleReserve(s)
 
+export const saleCost = (s: Sale) => (s.unitCost === undefined || s.unitCost === null ? null : s.unitCost * s.quantity)
+
+/** Desglose del costo de la venta (null en ventas antiguas que solo guardaron el total). */
+export function saleCostParts(s: Sale): { materials: number; electricity: number } | null {
+  if (s.unitFilamentCost === undefined && s.unitAccessoriesCost === undefined && s.unitElectricityCost === undefined) return null
+  return {
+    materials: ((s.unitFilamentCost ?? 0) + (s.unitAccessoriesCost ?? 0)) * s.quantity,
+    electricity: (s.unitElectricityCost ?? 0) * s.quantity,
+  }
+}
+
 export type SalesTotals = {
   count: number
   units: number
   revenue: number
   reserve: number
   profit: number // de las ventas con costo conocido
+  cost: number // costo total de las ventas con costo conocido
+  materials: number // filamento + accesorios
+  electricity: number
+  costNoBreakdown: number // costo de ventas antiguas sin desglose
   withoutCost: number // ventas sin dato de costo
   avgTicket: number
 }
 
 export function totals(sales: Sale[]): SalesTotals {
   let units = 0, revenue = 0, reserve = 0, profit = 0, withoutCost = 0
+  let cost = 0, materials = 0, electricity = 0, costNoBreakdown = 0
   for (const s of sales) {
     units += s.quantity
     revenue += saleRevenue(s)
@@ -61,8 +78,17 @@ export function totals(sales: Sale[]): SalesTotals {
     const p = saleProfit(s)
     if (p === null) withoutCost++
     else profit += p
+    const c = saleCost(s)
+    if (c !== null) {
+      cost += c
+      const parts = saleCostParts(s)
+      if (parts) {
+        materials += parts.materials
+        electricity += parts.electricity
+      } else costNoBreakdown += c
+    }
   }
-  return { count: sales.length, units, revenue, reserve, profit, withoutCost, avgTicket: sales.length ? revenue / sales.length : 0 }
+  return { count: sales.length, units, revenue, reserve, profit, cost, materials, electricity, costNoBreakdown, withoutCost, avgTicket: sales.length ? revenue / sales.length : 0 }
 }
 
 export type Bucket = { key: string; label: string; revenue: number; units: number }

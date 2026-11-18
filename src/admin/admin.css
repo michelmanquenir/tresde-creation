@@ -235,6 +235,7 @@
 .sale-form-fields { display: grid; gap: 14px; min-width: 0; }
 .sale-form-summary { display: grid; gap: 14px; padding: 16px; border-radius: var(--radius-sm); background: var(--surface-2); }
 .sales-periods { margin-bottom: 16px; }
+.sales-stats { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 .sales-stats > div { gap: 2px; }
 .sales-stats > div > span:first-child { font-weight: 600; color: var(--ink-2); }
 .sales-stats strong.is-loss, .sales-row .is-loss { color: #c0392b; }
@@ -259,7 +260,7 @@
 /* Historial */
 .sales-history { margin-top: 0; }
 .sales-table { display: grid; }
-.sales-row { display: grid; grid-template-columns: 110px minmax(180px, 2fr) 1fr 1fr 110px 44px; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-size: .92rem; }
+.sales-row { display: grid; grid-template-columns: 110px minmax(180px, 2fr) 1fr 1fr 1fr 110px 44px; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-size: .92rem; }
 .sales-row-head { border-top: 0; font-size: .74rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); }
 .sales-row .right { text-align: right; }
 .sales-product { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -275,9 +276,10 @@
   .sales-row > :nth-child(1) { grid-column: 1; }
   .sales-row > :nth-child(2) { grid-column: 1; }
   .sales-row > :nth-child(3) { grid-column: 2; grid-row: 1; }
-  .sales-row > :nth-child(4) { grid-column: 2; grid-row: 2; }
-  .sales-row > :nth-child(5) { grid-column: 1; }
-  .sales-row > :nth-child(6) { grid-column: 2; grid-row: 3; }
+  .sales-row > :nth-child(4) { display: none; } /* costo: en móvil se ve en Exportar */
+  .sales-row > :nth-child(5) { grid-column: 2; grid-row: 2; }
+  .sales-row > :nth-child(6) { grid-column: 1; }
+  .sales-row > :nth-child(7) { grid-column: 2; grid-row: 3; }
 }
 
 /* ───────── Formulario de producto simplificado ───────── */

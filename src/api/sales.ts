@@ -10,6 +10,9 @@ export type Sale = {
   quantity: number
   unitPrice: number
   unitCost?: number // sin dato si el producto no tenía costos cargados
+  unitFilamentCost?: number // desglose del costo unitario (no viene en ventas antiguas)
+  unitAccessoriesCost?: number
+  unitElectricityCost?: number
   reservePercent: number
   stockDiscounted: boolean
   channel?: string
