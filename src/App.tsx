@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { ProductsProvider } from './context/ProductsContext'
+import { CategoriesProvider } from './context/CategoriesContext'
 import { CartProvider } from './context/CartContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -18,6 +19,7 @@ import AdminSettings from './admin/AdminSettings'
 import AdminSales from './admin/AdminSales'
 import AdminAccessories from './admin/AdminAccessories'
 import AdminUsers from './admin/AdminUsers'
+import AdminCategories from './admin/AdminCategories'
 import AdminProducts from './admin/AdminProducts'
 import AdminProductForm from './admin/AdminProductForm'
 import AdminLogin from './admin/AdminLogin'
@@ -58,6 +60,7 @@ export default function App() {
     <BrowserRouter>
       <ThemeProvider>
       <AuthProvider>
+      <CategoriesProvider>
       <ProductsProvider>
         <CartProvider>
           <ScrollToTop />
@@ -93,6 +96,7 @@ export default function App() {
               />
               <Route path="ventas" element={<AdminSales />} />
               <Route path="accesorios" element={<AdminAccessories />} />
+              <Route path="categorias" element={<AdminCategories />} />
               <Route path="configuracion" element={<RequireAuth adminOnly><AdminSettings /></RequireAuth>} />
               <Route path="usuarios" element={<RequireAuth adminOnly><AdminUsers /></RequireAuth>} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
@@ -100,6 +104,7 @@ export default function App() {
           </Routes>
         </CartProvider>
       </ProductsProvider>
+      </CategoriesProvider>
       </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { categories, getCategory, MATERIALS, type Product } from '../data/catalog'
+import { MATERIALS, productCategories, type Product } from '../data/catalog'
 import { useProducts } from '../context/ProductsContext'
+import { useCategories } from '../context/CategoriesContext'
 import ProductCard from '../components/ProductCard'
 import LoadState from '../components/LoadState'
 import NotFound from './NotFound'
@@ -18,6 +19,7 @@ const sorters: Record<string, { label: string; fn: (a: Product, b: Product) => n
 export default function CategoryPage({ search = false }: { search?: boolean }) {
   const { slug } = useParams()
   const { visibleProducts: products, status } = useProducts()
+  const { categories, getCategory, status: catStatus } = useCategories()
   const [params, setParams] = useSearchParams()
   const [materials, setMaterials] = useState<string[]>([])
 
@@ -31,16 +33,21 @@ export default function CategoryPage({ search = false }: { search?: boolean }) {
     if (search) {
       const q = query.toLowerCase()
       result = result.filter((p) =>
-        `${p.name} ${p.description} ${getCategory(p.category)?.name}`.toLowerCase().includes(q),
+        `${p.name} ${p.description} ${productCategories(p).map((c) => getCategory(c)?.name).join(' ')}`
+          .toLowerCase()
+          .includes(q),
       )
     } else if (category) {
-      result = result.filter((p) => p.category === category.slug)
+      result = result.filter((p) => productCategories(p).includes(category.slug))
     }
     if (materials.length) result = result.filter((p) => materials.includes(p.material))
     return [...result].sort((sorters[sort] ?? sorters.relevancia).fn)
-  }, [products, search, query, category, materials, sort])
+  }, [products, search, query, category, materials, sort, getCategory])
 
-  if (!search && !isAll && !category) return <NotFound />
+  // Una categoría recién creada puede no estar aún en la lista guardada: se espera a que cargue
+  if (!search && !isAll && !category) {
+    return catStatus === 'loading' ? <div className="container page"><LoadState skeletons={4} /></div> : <NotFound />
+  }
 
   const title = search ? `Resultados para “${query}”` : category?.name ?? 'Todos los productos'
   const description = search

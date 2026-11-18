@@ -4,7 +4,7 @@ import { api } from './client'
 /** Datos que se envían para crear o editar un producto. */
 export type ProductInput = {
   name: string
-  category: string
+  categories: string[] // la primera es la principal
   price: number
   oldPrice?: number
   description: string

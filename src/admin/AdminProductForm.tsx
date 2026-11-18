@@ -1,6 +1,6 @@
 import { useEffect, useState, type DragEvent, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { categories, formatPrice, MATERIALS, type AccessoryUse, type Material, type Product } from '../data/catalog'
+import { formatPrice, MATERIALS, productCategories, type AccessoryUse, type Material, type Product } from '../data/catalog'
 import { useProducts } from '../context/ProductsContext'
 import { adminApi, type ProductInput } from '../api/products'
 import { ApiError } from '../api/client'
@@ -12,13 +12,14 @@ import { computeCost, formatCost, saleSummary } from '../utils/pricing'
 import CostLines from './CostLines'
 import AccessoryPicker from './AccessoryPicker'
 import { accessoriesCost, useAccessories } from '../api/accessories'
+import { useCategories } from '../context/CategoriesContext'
 
 const MAX_IMAGES = 6
 const PRESET_COLORS = ['#f4f1ea', '#2b2b2b', '#bdbdbd', '#e8443a', '#e86a3a', '#f2c14e', '#1e9e6a', '#3a7be8', '#7b4bd6', '#d4af37']
 
 type FormState = {
   name: string
-  category: string
+  categories: string[] // la primera es la principal
   price: string
   onSale: boolean // muestra el precio anterior tachado
   oldPrice: string
@@ -41,7 +42,7 @@ type FormState = {
 
 const emptyForm: FormState = {
   name: '',
-  category: 'figuras',
+  categories: [],
   price: '',
   onSale: false,
   oldPrice: '',
@@ -65,7 +66,7 @@ const str = (n?: number) => (n === undefined || n === null ? '' : String(n))
 
 const toForm = (p: Product): FormState => ({
   name: p.name,
-  category: p.category,
+  categories: productCategories(p),
   price: String(p.price),
   onSale: !!p.oldPrice,
   oldPrice: p.oldPrice ? String(p.oldPrice) : '',
@@ -134,6 +135,7 @@ function ProductForm({ existing }: { existing?: Product }) {
   const [imageUrl, setImageUrl] = useState('')
   const costSettings = useCostSettings()
   const accessoryCatalog = useAccessories()
+  const { categories } = useCategories()
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }))
 
@@ -185,7 +187,7 @@ function ProductForm({ existing }: { existing?: Product }) {
   // ── Construir producto ──
   const toInput = (): ProductInput => ({
     name: form.name.trim(),
-    category: form.category,
+    categories: form.categories,
     price: Number(form.price) || 0,
     oldPrice: form.onSale ? num(form.oldPrice) : undefined,
     description: form.description.trim(),
@@ -209,6 +211,7 @@ function ProductForm({ existing }: { existing?: Product }) {
   const validate = () => {
     const e: Record<string, string> = {}
     if (!form.name.trim()) e.name = 'Escribe un nombre.'
+    if (!form.categories.length) e.categories = 'Elige al menos una categoría.'
     if (!(Number(form.price) > 0)) e.price = 'El precio debe ser mayor a 0.'
     if (form.onSale && !(Number(form.oldPrice) > Number(form.price)))
       e.oldPrice = 'El precio anterior debe ser mayor al precio de oferta.'
@@ -254,6 +257,7 @@ function ProductForm({ existing }: { existing?: Product }) {
   const preview: Product = {
     ...toInput(),
     id: existing?.id ?? 'vista-previa',
+    category: form.categories[0] ?? '',
     name: form.name || 'Nombre del producto',
     rating: existing?.rating,
   }
@@ -285,13 +289,49 @@ function ProductForm({ existing }: { existing?: Product }) {
               />
               {errors.description && <span className="field-error">{errors.description}</span>}
             </label>
+            <div className="field">
+              <span>
+                Categorías * <span className="muted small">(puedes marcar varias)</span>
+              </span>
+              <div className="cat-picker" role="group" aria-label="Categorías">
+                {categories.map((c) => {
+                  const on = form.categories.includes(c.slug)
+                  return (
+                    <button
+                      key={c.slug}
+                      type="button"
+                      className={`chip sm ${on ? 'active' : ''}`}
+                      aria-pressed={on}
+                      onClick={() =>
+                        set('categories', on ? form.categories.filter((s) => s !== c.slug) : [...form.categories, c.slug])
+                      }
+                    >
+                      <Icon name={on ? 'check' : c.icon} size={14} /> {c.name}
+                    </button>
+                  )
+                })}
+                <Link to="/admin/categorias" className="chip sm chip-link">
+                  <Icon name="plus" size={14} /> Nueva categoría
+                </Link>
+              </div>
+              {errors.categories && <span className="field-error">{errors.categories}</span>}
+            </div>
             <div className="field-row">
-              <label className="field">
-                Categoría
-                <select value={form.category} onChange={(e) => set('category', e.target.value)}>
-                  {categories.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
-                </select>
-              </label>
+              {form.categories.length > 1 && (
+                <label className="field">
+                  Categoría principal <span className="muted small">(la que se ve en la tarjeta)</span>
+                  <select
+                    value={form.categories[0]}
+                    onChange={(e) =>
+                      set('categories', [e.target.value, ...form.categories.filter((s) => s !== e.target.value)])
+                    }
+                  >
+                    {form.categories.map((slug) => (
+                      <option key={slug} value={slug}>{categories.find((c) => c.slug === slug)?.name ?? slug}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
               <label className="field">
                 Material
                 <select value={form.material} onChange={(e) => set('material', e.target.value as Material)}>

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { categories, STORE_NAME } from '../data/catalog'
+import { STORE_NAME } from '../data/catalog'
+import { useCategories } from '../context/CategoriesContext'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { canUsePanel } from '../auth/authService'
@@ -10,6 +11,7 @@ import ThemePicker from './ThemePicker'
 export default function Navbar() {
   const { count, open } = useCart()
   const { session } = useAuth()
+  const { categories } = useCategories()
   const isAdmin = canUsePanel(session?.role)
   const accountPath = isAdmin ? '/admin' : session ? '/cuenta' : '/cuenta/ingresar'
   const accountLabel = isAdmin

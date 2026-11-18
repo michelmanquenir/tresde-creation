@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
-import { formatPrice, getCategory, type Product } from '../data/catalog'
+import { formatPrice, type Product } from '../data/catalog'
+import { useCategories } from '../context/CategoriesContext'
 import { useCart } from '../context/CartContext'
 import Icon from './Icon'
 import ProductImage from './ProductImage'
 
 export default function ProductCard({ product }: { product: Product }) {
+  const { getCategory } = useCategories()
   const { add, available } = useCart()
   const soldOut = !product.stock
   const canAdd = available(product.id) > 0

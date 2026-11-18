@@ -345,3 +345,45 @@
   .user-main { flex-wrap: wrap; }
   .user-info { flex-basis: calc(100% - 46px); }
 }
+
+/* ───────── Categorías ───────── */
+.cat-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+.cat-picker .chip { gap: 6px; cursor: pointer; }
+.chip-link { border-style: dashed; color: var(--ink-2); }
+.cat-new { margin-bottom: 16px; }
+.cat-new .legend { margin: 0; }
+.icon-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.icon-choice { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+.icon-choice:hover { border-color: var(--ink); color: var(--ink); }
+.icon-choice.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.hue-row { display: flex; align-items: center; gap: 12px; }
+.hue-range {
+  flex: 1; appearance: none; height: 10px; border-radius: 999px; padding: 0; border: 0;
+  background: linear-gradient(90deg, hsl(0 70% 70%), hsl(60 70% 70%), hsl(120 70% 70%), hsl(180 70% 70%), hsl(240 70% 70%), hsl(300 70% 70%), hsl(359 70% 70%));
+}
+.cat-swatch {
+  --hue: 20;
+  width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 30% 20%, hsl(var(--hue) 80% 92%), hsl(var(--hue) 45% 80%));
+  color: hsl(var(--hue) 45% 32%);
+}
+.cat-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.cat-item { border-top: 1px solid var(--line); padding: 10px 0; }
+.cat-item:first-child { border-top: 0; }
+.cat-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.cat-order { display: flex; flex-direction: column; }
+.cat-order .icon-btn { width: 26px; height: 22px; }
+.cat-order .flip { transform: rotate(180deg); }
+.cat-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.cat-info > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-count { white-space: nowrap; }
+.cat-count:hover { text-decoration: underline; }
+.cat-actions { display: flex; gap: 4px; }
+.cat-edit { display: grid; gap: 12px; margin-top: 12px; padding: 12px; border-radius: 12px; background: var(--surface-2); }
+.cat-edit-actions { display: flex; align-items: center; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+.cat-edit-actions > span { margin-right: auto; }
+@media (max-width: 560px) {
+  .cat-main { flex-wrap: wrap; }
+  .cat-info { flex-basis: calc(100% - 100px); }
+  .cat-count { margin-left: 88px; }
+}

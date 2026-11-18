@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LOW_STOCK, categories, formatPrice, getCategory, type Product } from '../data/catalog'
+import { LOW_STOCK, formatPrice, productCategories, type Product } from '../data/catalog'
+import { useCategories } from '../context/CategoriesContext'
 import { useProducts } from '../context/ProductsContext'
 import { adminApi } from '../api/products'
 import Icon from '../components/Icon'
@@ -26,13 +27,15 @@ function ProfitHint({ product: p, settings }: { product: Product; settings: Cost
 
 export default function AdminProducts() {
   const { reload: reloadStore } = useProducts()
+  const { categories, getCategory } = useCategories()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState('')
   const [query, setQuery] = useState('')
-  const [category, setCategory] = useState('')
+  const location = useLocation()
+  const [category, setCategory] = useState(() => new URLSearchParams(location.search).get('categoria') ?? '')
   const [error, setError] = useState('')
-  const saved = (useLocation().state as { saved?: string } | null)?.saved
+  const saved = (location.state as { saved?: string } | null)?.saved
   const [notice, setNotice] = useState(saved ? 'saved' : '')
   const fileInput = useRef<HTMLInputElement>(null)
   const costSettings = useCostSettings()
@@ -54,7 +57,7 @@ export default function AdminProducts() {
   const list = useMemo(() => {
     const q = query.trim().toLowerCase()
     return products.filter(
-      (p) => (!category || p.category === category) && (!q || p.name.toLowerCase().includes(q)),
+      (p) => (!category || productCategories(p).includes(category)) && (!q || p.name.toLowerCase().includes(q)),
     )
   }, [products, query, category])
 
@@ -206,7 +209,10 @@ export default function AdminProducts() {
                   </span>
                 </div>
               </div>
-              <span role="cell" className="admin-cell-cat">{getCategory(p.category)?.name ?? '—'}</span>
+              <span role="cell" className="admin-cell-cat" title={productCategories(p).map((c) => getCategory(c)?.name ?? c).join(', ')}>
+                {getCategory(p.category)?.name ?? '—'}
+                {productCategories(p).length > 1 && <span className="muted small"> +{productCategories(p).length - 1}</span>}
+              </span>
               <span role="cell" className="admin-cell-price">
                 <strong>{formatPrice(p.price)}</strong>
                 {p.oldPrice && <s className="muted small">{formatPrice(p.oldPrice)}</s>}

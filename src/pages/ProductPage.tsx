@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { LOW_STOCK, formatPrice, getCategory } from '../data/catalog'
+import { LOW_STOCK, formatPrice, productCategories } from '../data/catalog'
+import { useCategories } from '../context/CategoriesContext'
 import { useCart } from '../context/CartContext'
 import { useProducts } from '../context/ProductsContext'
 import Icon from '../components/Icon'
@@ -12,6 +13,7 @@ import NotFound from './NotFound'
 export default function ProductPage() {
   const { id } = useParams()
   const { getProduct, visibleProducts, status } = useProducts()
+  const { getCategory } = useCategories()
   const product = getProduct(id)
   // key={id} en App reinicia este estado al cambiar de producto
   const [pickedColor, setColor] = useState('')
@@ -34,9 +36,10 @@ export default function ProductPage() {
   const amount = Math.min(qty, Math.max(canAdd, 1))
 
   const category = getCategory(product.category)
+  const cats = productCategories(product)
   const images = product.images ?? []
   const related = visibleProducts
-    .filter((p) => p.category === product.category && p.id !== product.id)
+    .filter((p) => p.id !== product.id && productCategories(p).some((c) => cats.includes(c)))
     .slice(0, 4)
 
   return (
@@ -68,7 +71,14 @@ export default function ProductPage() {
         </div>
 
         <div className="pdp-info">
-          <span className="card-cat">{category?.name}</span>
+          <span className="card-cat">
+            {cats.map((slug, i) => (
+              <span key={slug}>
+                {i > 0 && ' · '}
+                <Link to={`/categoria/${slug}`}>{getCategory(slug)?.name ?? slug}</Link>
+              </span>
+            ))}
+          </span>
           <h1>{product.name}</h1>
           <div className="rating">
             {product.rating ? (

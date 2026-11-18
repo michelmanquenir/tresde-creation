@@ -101,13 +101,13 @@ export default function AdminSettings() {
           <fieldset className="panel">
             <legend>Impresora</legend>
             <label className="field">
-              <span>Valor hora de la máquina <span className="muted small">(pesos por hora de impresión)</span></span>
+              <span>Costo de luz por hora <span className="muted small">(pesos por hora de impresión)</span></span>
               <input type="number" min={0} step={1} inputMode="decimal" value={form.machineHourCost} onChange={(e) => set('machineHourCost', e.target.value)} />
               {errors.machineHourCost && <span className="field-error">{errors.machineHourCost}</span>}
             </label>
 
             <div className="calc-box">
-              <p className="small"><strong>¿No sabes el valor hora?</strong> Calcúlalo con el consumo de tu impresora:</p>
+              <p className="small"><strong>¿No sabes cuánto es?</strong> Calcúlalo con el consumo de tu impresora:</p>
               <div className="field-row">
                 <label className="field">
                   Consumo (watts)

@@ -1,8 +1,8 @@
 // Cálculo de costos y precio sugerido de un producto impreso en 3D.
 //
 //   filamento  = gramos por pieza × precio por kg ÷ 1000
-//   máquina    = horas del lote × valor hora ÷ piezas del lote   (imprimir varias a la vez abarata cada una)
-//   costo      = filamento + máquina + accesorios
+//   luz        = horas del lote × costo de luz por hora ÷ piezas del lote   (imprimir varias a la vez abarata cada una)
+//   costo      = filamento + luz + accesorios
 //   sugerido   = costo × multiplicador (redondeado hacia arriba a la decena)
 //
 // Al vender, se aparta un % del precio para recuperar la máquina:
@@ -11,7 +11,7 @@
 import type { Material, ProductCost } from '../data/catalog'
 
 export type CostSettings = {
-  machineHourCost: number // pesos por hora de impresora
+  machineHourCost: number // costo de luz por hora de impresión (pesos)
   machineReservePercent: number // % de cada venta que se aparta para la máquina
   priceMultiplier: number // precio sugerido = costo × multiplicador
   filamentPricePerKg: Record<Material, number>

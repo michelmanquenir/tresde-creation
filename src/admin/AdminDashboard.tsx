@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { LOW_STOCK, categories, type Product } from '../data/catalog'
+import { LOW_STOCK, productCategories, type Product } from '../data/catalog'
+import { useCategories } from '../context/CategoriesContext'
 import { useAuth } from '../context/AuthContext'
 import { adminApi } from '../api/products'
 import Icon from '../components/Icon'
@@ -8,6 +9,7 @@ import Icon from '../components/Icon'
 // Inicio del panel: resumen del catálogo y accesos rápidos.
 export default function AdminDashboard() {
   const { session } = useAuth()
+  const { categories } = useCategories()
   const [products, setProducts] = useState<Product[] | null>(null)
   const [error, setError] = useState('')
 
@@ -23,7 +25,7 @@ export default function AdminDashboard() {
   const onSale = list.filter((p) => p.oldPrice && p.oldPrice > p.price).length
   const noPhotos = list.filter((p) => !p.images?.length)
   const lowStock = list.filter((p) => (p.stock ?? 0) <= LOW_STOCK).sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0))
-  const byCategory = categories.map((c) => ({ ...c, count: list.filter((p) => p.category === c.slug).length }))
+  const byCategory = categories.map((c) => ({ ...c, count: list.filter((p) => productCategories(p).includes(c.slug)).length }))
   const maxCount = Math.max(1, ...byCategory.map((c) => c.count))
 
   return (

@@ -1,11 +1,13 @@
 import type { CSSProperties } from 'react'
-import { getCategory, type Product } from '../data/catalog'
+import type { Product } from '../data/catalog'
+import { useCategories } from '../context/CategoriesContext'
 import Icon from './Icon'
 
 // Muestra la foto real si existe; si no, un relleno con "capas de impresión".
 type Props = { product: Product; color?: string; index?: number }
 
 export default function ProductImage({ product, color, index = 0 }: Props) {
+  const { getCategory } = useCategories()
   const src = product.images?.[index]
   if (src) {
     return <img className="product-img" src={src} alt={product.name} loading="lazy" />

@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
-import { categories } from '../data/catalog'
+import { useCategories } from '../context/CategoriesContext'
 import { useProducts } from '../context/ProductsContext'
 import Icon from '../components/Icon'
 import ProductCard from '../components/ProductCard'
@@ -8,6 +8,7 @@ import ProductImage from '../components/ProductImage'
 import LoadState from '../components/LoadState'
 
 export default function Home() {
+  const { categories } = useCategories()
   const { visibleProducts: products, status } = useProducts()
   const newProducts = products.filter((p) => p.isNew).slice(0, 8)
   const bestSellers = products.filter((p) => p.bestSeller).slice(0, 4)

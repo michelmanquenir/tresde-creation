@@ -26,7 +26,8 @@ export type ProductCost = {
 export type Product = {
   id: string
   name: string
-  category: string // slug de la categoría
+  category: string // slug de la categoría principal
+  categories?: string[] // todas sus categorías (la primera es la principal)
   price: number
   oldPrice?: number
   description: string
@@ -58,8 +59,8 @@ export const formatPrice = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value)
 
-// Deben coincidir con la tabla "categories" del backend (V2__datos_iniciales.sql).
-export const categories: Category[] = [
+// Categorías iniciales: solo se usan mientras carga la lista real del backend (ver context/CategoriesContext).
+export const DEFAULT_CATEGORIES: Category[] = [
   { slug: 'decoracion', name: 'Decoración', description: 'Macetas, lámparas y piezas para darle vida a tu espacio.', icon: 'vase', hue: 18 },
   { slug: 'figuras', name: 'Figuras', description: 'Coleccionables, miniaturas y bustos con gran detalle.', icon: 'figure', hue: 265 },
   { slug: 'hogar', name: 'Hogar y organización', description: 'Soportes, organizadores y soluciones prácticas.', icon: 'home', hue: 160 },
@@ -68,4 +69,6 @@ export const categories: Category[] = [
   { slug: 'repuestos', name: 'Repuestos técnicos', description: 'Piezas funcionales, engranajes y reemplazos a medida.', icon: 'gear', hue: 45 },
 ]
 
-export const getCategory = (slug?: string) => categories.find((c) => c.slug === slug)
+/** Todas las categorías del producto (la primera es la principal). */
+export const productCategories = (p: Pick<Product, 'category' | 'categories'>) =>
+  p.categories?.length ? p.categories : [p.category]
