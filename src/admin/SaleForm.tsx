@@ -44,7 +44,9 @@ export default function SaleForm({ products, settings, initialProductId, onSaved
   const price = Number(unitPrice) || 0
   const total = qty * price
   const cost = product && settings ? computeCost(product.cost, product.material, settings) : null
-  const sale = cost && settings && price > 0 ? saleSummary(price, cost.total, settings) : null
+  // En las ventas solo se descuenta la materia prima (filamento + accesorios); la luz es solo para el precio sugerido
+  const materials = cost ? cost.filament + cost.accessories : 0
+  const sale = cost && settings && price > 0 && materials > 0 ? saleSummary(price, materials, settings) : null
   const overStock = !!product && qty > product.stock
 
   const pickProduct = (id: string) => {
@@ -181,8 +183,8 @@ export default function SaleForm({ products, settings, initialProductId, onSaved
             <div><dt>Total de la venta</dt><dd><strong>{formatPrice(total)}</strong></dd></div>
             {sale && cost ? (
               <>
-                <div><dt>Materia prima <span className="muted small">(filamento + accesorios)</span></dt><dd>−{formatCost((cost.filament + cost.accessories) * qty)}</dd></div>
-                <div><dt>Electricidad</dt><dd>−{formatCost(cost.machine * qty)}</dd></div>
+                <div><dt>Filamento</dt><dd>−{formatCost(cost.filament * qty)}</dd></div>
+                {cost.accessories > 0 && <div><dt>Accesorios</dt><dd>−{formatCost(cost.accessories * qty)}</dd></div>}
                 <div><dt>Para la máquina ({settings?.machineReservePercent}%)</dt><dd>−{formatCost(sale.reserve * qty)}</dd></div>
                 <div className={`cost-total ${sale.profit < 0 ? 'is-loss' : ''}`}>
                   <dt>Ganancia</dt><dd>{formatCost(sale.profit * qty)}</dd>

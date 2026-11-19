@@ -1,8 +1,8 @@
 // Estadísticas de ventas calculadas en el navegador a partir del listado del período.
 //
 //   ingreso  = cantidad × precio unitario
-//   costo    = cantidad × costo unitario (congelado al vender; puede faltar)
-//              = materia prima (filamento + accesorios) + electricidad
+//   costo    = cantidad × costo unitario = materia prima (filamento + accesorios), congelada al vender
+//              (la luz solo se usa para el precio sugerido del producto, no en las ventas)
 //   máquina  = ingreso × % máquina
 //   ganancia = ingreso − costo − máquina   (solo de las ventas con costo conocido)
 
@@ -43,15 +43,13 @@ export const saleReserve = (s: Sale) => (saleRevenue(s) * s.reservePercent) / 10
 export const saleProfit = (s: Sale) =>
   s.unitCost === undefined || s.unitCost === null ? null : saleRevenue(s) - s.unitCost * s.quantity - saleReserve(s)
 
+/** Materia prima de la venta (cantidad × costo unitario). null si el producto no tenía costos. */
 export const saleCost = (s: Sale) => (s.unitCost === undefined || s.unitCost === null ? null : s.unitCost * s.quantity)
 
-/** Desglose del costo de la venta (null en ventas antiguas que solo guardaron el total). */
-export function saleCostParts(s: Sale): { materials: number; electricity: number } | null {
-  if (s.unitFilamentCost === undefined && s.unitAccessoriesCost === undefined && s.unitElectricityCost === undefined) return null
-  return {
-    materials: ((s.unitFilamentCost ?? 0) + (s.unitAccessoriesCost ?? 0)) * s.quantity,
-    electricity: (s.unitElectricityCost ?? 0) * s.quantity,
-  }
+/** Filamento y accesorios por separado (null en ventas antiguas, cuyo costo además incluía la luz). */
+export function saleCostParts(s: Sale): { filament: number; accessories: number } | null {
+  if (s.unitFilamentCost === undefined && s.unitAccessoriesCost === undefined) return null
+  return { filament: (s.unitFilamentCost ?? 0) * s.quantity, accessories: (s.unitAccessoriesCost ?? 0) * s.quantity }
 }
 
 export type SalesTotals = {
@@ -60,17 +58,17 @@ export type SalesTotals = {
   revenue: number
   reserve: number
   profit: number // de las ventas con costo conocido
-  cost: number // costo total de las ventas con costo conocido
-  materials: number // filamento + accesorios
-  electricity: number
-  costNoBreakdown: number // costo de ventas antiguas sin desglose
+  cost: number // materia prima de las ventas con costo conocido
+  filament: number
+  accessories: number
+  legacyCost: number // costo de ventas antiguas (sin desglose; incluía la luz)
   withoutCost: number // ventas sin dato de costo
   avgTicket: number
 }
 
 export function totals(sales: Sale[]): SalesTotals {
   let units = 0, revenue = 0, reserve = 0, profit = 0, withoutCost = 0
-  let cost = 0, materials = 0, electricity = 0, costNoBreakdown = 0
+  let cost = 0, filament = 0, accessories = 0, legacyCost = 0
   for (const s of sales) {
     units += s.quantity
     revenue += saleRevenue(s)
@@ -83,12 +81,12 @@ export function totals(sales: Sale[]): SalesTotals {
       cost += c
       const parts = saleCostParts(s)
       if (parts) {
-        materials += parts.materials
-        electricity += parts.electricity
-      } else costNoBreakdown += c
+        filament += parts.filament
+        accessories += parts.accessories
+      } else legacyCost += c
     }
   }
-  return { count: sales.length, units, revenue, reserve, profit, cost, materials, electricity, costNoBreakdown, withoutCost, avgTicket: sales.length ? revenue / sales.length : 0 }
+  return { count: sales.length, units, revenue, reserve, profit, cost, filament, accessories, legacyCost, withoutCost, avgTicket: sales.length ? revenue / sales.length : 0 }
 }
 
 export type Bucket = { key: string; label: string; revenue: number; units: number }

@@ -9,10 +9,9 @@ export type Sale = {
   color?: string
   quantity: number
   unitPrice: number
-  unitCost?: number // sin dato si el producto no tenía costos cargados
-  unitFilamentCost?: number // desglose del costo unitario (no viene en ventas antiguas)
+  unitCost?: number // materia prima por unidad (filamento + accesorios). En ventas antiguas incluía la luz.
+  unitFilamentCost?: number // desglose (no viene en ventas antiguas)
   unitAccessoriesCost?: number
-  unitElectricityCost?: number
   reservePercent: number
   stockDiscounted: boolean
   channel?: string

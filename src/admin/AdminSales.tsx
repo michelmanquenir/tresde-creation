@@ -103,7 +103,7 @@ export default function AdminSales() {
   }
 
   const onExport = () => {
-    const head = ['Fecha', 'Producto', 'Color', 'Cantidad', 'Precio unitario', 'Total', 'Costo unitario', 'Materia prima', 'Electricidad', 'Costo total', '% máquina', 'Ganancia', 'Canal', 'Cliente', 'Nota']
+    const head = ['Fecha', 'Producto', 'Color', 'Cantidad', 'Precio unitario', 'Total', 'Materia prima unitaria', 'Filamento', 'Accesorios', 'Materia prima total', '% máquina', 'Ganancia', 'Canal', 'Cliente', 'Nota']
     const rows = list.map((s) => {
       const profit = saleProfit(s)
       const parts = saleCostParts(s)
@@ -116,8 +116,8 @@ export default function AdminSales() {
         s.unitPrice,
         saleRevenue(s),
         s.unitCost === undefined ? '' : Math.round(s.unitCost),
-        parts ? Math.round(parts.materials) : '',
-        parts ? Math.round(parts.electricity) : '',
+        parts ? Math.round(parts.filament) : '',
+        parts ? Math.round(parts.accessories) : '',
         cost === null ? '' : Math.round(cost),
         s.reservePercent,
         profit === null ? '' : Math.round(profit),
@@ -178,12 +178,15 @@ export default function AdminSales() {
           <span className="muted small">{t.count} {t.count === 1 ? 'venta' : 'ventas'} · ticket prom. {formatPrice(Math.round(t.avgTicket))}</span>
         </div>
         <div>
-          <span>Costos</span>
+          <span>Materia prima</span>
           <strong>{sales ? formatCost(Math.round(t.cost)) : '–'}</strong>
           <span className="muted small">
             {t.cost > 0
-              ? `materia prima ${formatCost(Math.round(t.materials))} · luz ${formatCost(Math.round(t.electricity))}${t.costNoBreakdown ? ` · sin desglose ${formatCost(Math.round(t.costNoBreakdown))}` : ''}`
-              : 'filamento, accesorios y luz'}
+              ? [
+                  t.filament || t.accessories ? `filamento ${formatCost(Math.round(t.filament))} · accesorios ${formatCost(Math.round(t.accessories))}` : '',
+                  t.legacyCost ? `ventas antiguas ${formatCost(Math.round(t.legacyCost))} (incluían luz)` : '',
+                ].filter(Boolean).join(' · ')
+              : 'filamento y accesorios'}
           </span>
         </div>
         <div>
@@ -278,7 +281,7 @@ export default function AdminSales() {
               <span role="columnheader">Fecha</span>
               <span role="columnheader">Producto</span>
               <span role="columnheader" className="right">Total</span>
-              <span role="columnheader" className="right">Costo</span>
+              <span role="columnheader" className="right">Materia prima</span>
               <span role="columnheader" className="right">Ganancia</span>
               <span role="columnheader">Canal</span>
               <span role="columnheader" />
@@ -311,8 +314,13 @@ export default function AdminSales() {
                       <>
                         −{formatCost(Math.round(cost))}
                         {parts && (
-                          <span className="muted small sales-meta" title="Materia prima (filamento + accesorios) · electricidad">
-                            MP {formatCost(Math.round(parts.materials))} · luz {formatCost(Math.round(parts.electricity))}
+                          <span className="muted small sales-meta">
+                            filamento {formatCost(Math.round(parts.filament))}{parts.accessories > 0 && ` · acc. ${formatCost(Math.round(parts.accessories))}`}
+                          </span>
+                        )}
+                        {!parts && (
+                          <span className="muted small sales-meta" title="Venta registrada antes del cambio: su costo incluía la luz">
+                            incluye luz
                           </span>
                         )}
                       </>
