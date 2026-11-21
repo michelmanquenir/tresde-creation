@@ -260,7 +260,7 @@
 /* Historial */
 .sales-history { margin-top: 0; }
 .sales-table { display: grid; }
-.sales-row { display: grid; grid-template-columns: 110px minmax(180px, 2fr) 1fr 1fr 1fr 110px 44px; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-size: .92rem; }
+.sales-row { display: grid; grid-template-columns: 110px minmax(180px, 2fr) 1fr 1fr 1fr 110px 70px; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-size: .92rem; }
 .sales-row-head { border-top: 0; font-size: .74rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); }
 .sales-row .right { text-align: right; }
 .sales-product { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -388,4 +388,39 @@
   .cat-main { flex-wrap: wrap; }
   .cat-info { flex-basis: calc(100% - 100px); }
   .cat-count { margin-left: 88px; }
+}
+
+/* ───────── Cuadratura semanal ───────── */
+.machine-fund { margin-bottom: 16px; }
+.machine-fund-head, .closing-form-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.machine-fund-head .legend, .closing-form-head .legend { margin: 0; }
+.fund-bar { height: 14px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.fund-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .4s; }
+.fund-numbers { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.fund-done { color: #146c48; }
+.closing-form { margin-bottom: 16px; }
+.closing-day { flex-direction: row; align-items: center; gap: 8px; }
+.closing-day input { width: auto; }
+.closing-split { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.closing-box { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
+.closing-box input { font-size: 1.15rem; font-weight: 700; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink); width: 100%; }
+.closing-box input:focus { outline: none; border-color: var(--ink); }
+.closing-box-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.closing-box.is-materials { border-top: 4px solid #3a7be8; }
+.closing-box.is-machine { border-top: 4px solid #f2a33a; }
+.closing-box.is-profit { border-top: 4px solid #1e9e6a; }
+.closing-diff { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0; font-size: .9rem; }
+.closing-diff.is-loss { color: #c0392b; }
+.closing-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.closing-item { border-top: 1px solid var(--line); padding: 12px 0; display: grid; gap: 8px; }
+.closing-item:first-child { border-top: 0; }
+.closing-item-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.closing-item-head > div { display: flex; flex-direction: column; }
+.closing-amounts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.closing-amounts > div { padding: 8px 10px; border-radius: 10px; background: var(--surface-2); }
+.closing-amounts dt { font-size: .75rem; color: var(--ink-2); }
+.closing-amounts dd { margin: 0; font-weight: 700; }
+.closing-note { margin: 0; }
+@media (max-width: 720px) {
+  .closing-split { grid-template-columns: 1fr; }
 }

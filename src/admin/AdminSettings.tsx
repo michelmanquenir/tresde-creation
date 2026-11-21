@@ -9,6 +9,7 @@ type FormState = {
   machineHourCost: string
   machineReservePercent: string
   priceMultiplier: string
+  machinePrice: string
   filament: Record<Material, string>
 }
 
@@ -16,6 +17,7 @@ const toForm = (s: CostSettings): FormState => ({
   machineHourCost: String(s.machineHourCost),
   machineReservePercent: String(s.machineReservePercent),
   priceMultiplier: String(s.priceMultiplier),
+  machinePrice: String(s.machinePrice ?? ''),
   filament: Object.fromEntries(MATERIALS.map((m) => [m, String(s.filamentPricePerKg[m] ?? 0)])) as Record<Material, string>,
 })
 
@@ -23,6 +25,7 @@ const toSettings = (f: FormState): CostSettings => ({
   machineHourCost: Number(f.machineHourCost) || 0,
   machineReservePercent: Number(f.machineReservePercent) || 0,
   priceMultiplier: Number(f.priceMultiplier) || 0,
+  machinePrice: f.machinePrice.trim() === '' ? undefined : Math.round(Number(f.machinePrice) || 0),
   filamentPricePerKg: Object.fromEntries(MATERIALS.map((m) => [m, Number(f.filament[m]) || 0])) as Record<Material, number>,
 })
 
@@ -134,6 +137,13 @@ export default function AdminSettings() {
               <input type="number" min={0} max={90} step={1} value={form.machineReservePercent} onChange={(e) => set('machineReservePercent', e.target.value)} />
               <span className="muted small">Se descuenta del precio de venta para ahorrar para mantención, repuestos o una impresora nueva.</span>
               {errors.machineReservePercent && <span className="field-error">{errors.machineReservePercent}</span>}
+            </label>
+
+            <label className="field">
+              <span>Valor de la impresora <span className="muted small">(lo que costó)</span></span>
+              <input type="number" min={0} step={1000} inputMode="numeric" value={form.machinePrice} onChange={(e) => set('machinePrice', e.target.value)} placeholder="Ej: 1300000" />
+              <span className="muted small">Lo que retiras para la máquina en cada cuadratura se descuenta de este valor hasta pagarla.</span>
+              {errors.machinePrice && <span className="field-error">{errors.machinePrice}</span>}
             </label>
           </fieldset>
 

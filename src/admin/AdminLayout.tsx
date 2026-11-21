@@ -19,6 +19,7 @@ const MENU = [
   },
   { to: '/admin/productos/nuevo', label: 'Nuevo producto', icon: 'plus', isActive: (p: string) => p === '/admin/productos/nuevo' },
   { to: '/admin/ventas', label: 'Ventas', icon: 'chart', isActive: (p: string) => p === '/admin/ventas' },
+  { to: '/admin/cuadratura', label: 'Cuadratura', icon: 'wallet', isActive: (p: string) => p === '/admin/cuadratura', adminOnly: true },
   { to: '/admin/categorias', label: 'Categorías', icon: 'layers', isActive: (p: string) => p === '/admin/categorias' },
   { to: '/admin/accesorios', label: 'Accesorios', icon: 'key', isActive: (p: string) => p === '/admin/accesorios' },
   { to: '/admin/usuarios', label: 'Usuarios', icon: 'user', isActive: (p: string) => p === '/admin/usuarios', adminOnly: true },

@@ -17,6 +17,7 @@ export type Sale = {
   channel?: string
   customer?: string
   note?: string
+  closingId?: number // cuadratura en que se cerró (no viene si está pendiente)
   soldAt: string // ISO
   createdAt: string
 }

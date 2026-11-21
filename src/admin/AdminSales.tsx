@@ -331,9 +331,15 @@ export default function AdminSales() {
                   </span>
                   <span role="cell" className="small">{s.channel ?? '—'}</span>
                   <span role="cell" className="right">
-                    <button className="icon-btn danger" disabled={busyId === s.id} onClick={() => onDelete(s)} title="Anular venta" aria-label="Anular venta">
-                      <Icon name="trash" size={17} />
-                    </button>
+                    {s.closingId ? (
+                      <span className="tag tag-muted" title="Ya está en una cuadratura: para anularla, anula primero esa cuadratura">
+                        Cerrada
+                      </span>
+                    ) : (
+                      <button className="icon-btn danger" disabled={busyId === s.id} onClick={() => onDelete(s)} title="Anular venta" aria-label="Anular venta">
+                        <Icon name="trash" size={17} />
+                      </button>
+                    )}
                   </span>
                 </div>
               )

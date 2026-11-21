@@ -15,6 +15,7 @@ export type CostSettings = {
   machineReservePercent: number // % de cada venta que se aparta para la máquina
   priceMultiplier: number // precio sugerido = costo × multiplicador
   filamentPricePerKg: Record<Material, number>
+  machinePrice?: number // valor de la impresora (se va pagando con las cuadraturas)
 }
 
 export type CostBreakdown = {

@@ -20,6 +20,7 @@ import AdminSales from './admin/AdminSales'
 import AdminAccessories from './admin/AdminAccessories'
 import AdminUsers from './admin/AdminUsers'
 import AdminCategories from './admin/AdminCategories'
+import AdminClosings from './admin/AdminClosings'
 import AdminProducts from './admin/AdminProducts'
 import AdminProductForm from './admin/AdminProductForm'
 import AdminLogin from './admin/AdminLogin'
@@ -99,6 +100,7 @@ export default function App() {
               <Route path="categorias" element={<AdminCategories />} />
               <Route path="configuracion" element={<RequireAuth adminOnly><AdminSettings /></RequireAuth>} />
               <Route path="usuarios" element={<RequireAuth adminOnly><AdminUsers /></RequireAuth>} />
+              <Route path="cuadratura" element={<RequireAuth adminOnly><AdminClosings /></RequireAuth>} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>
           </Routes>
