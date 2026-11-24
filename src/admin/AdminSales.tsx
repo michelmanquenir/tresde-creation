@@ -7,6 +7,7 @@ import { useCostSettings } from '../api/settings'
 import { useProducts } from '../context/ProductsContext'
 import { formatCost } from '../utils/pricing'
 import {
+  PENDING_ONLY,
   PERIODS,
   buckets,
   byChannel,
@@ -29,7 +30,7 @@ const compact = (n: number) =>
 export default function AdminSales() {
   const [params, setParams] = useSearchParams()
   const presetProduct = params.get('producto') ?? undefined
-  const [period, setPeriod] = useState<PeriodKey>('month')
+  const [period, setPeriod] = useState<PeriodKey>('week')
   const [sales, setSales] = useState<Sale[] | null>(null)
   const [products, setProducts] = useState<Product[] | null>(null)
   const [error, setError] = useState('')
@@ -57,7 +58,10 @@ export default function AdminSales() {
     loadProducts()
   }, [])
 
-  const list = sales ?? []
+  const pendingOnly = !!PENDING_ONLY[period]
+  // En la semana en curso las ventas ya cuadradas no cuentan: al cerrar la semana todo vuelve a 0.
+  const list = useMemo(() => (sales ?? []).filter((s) => !pendingOnly || !s.closingId), [sales, pendingOnly])
+  const closedCount = (sales?.length ?? 0) - list.length
   const t = totals(list)
   const chart = buckets(list, range.from, range.to)
   const maxRevenue = Math.max(1, ...chart.items.map((b) => b.revenue))
@@ -171,6 +175,13 @@ export default function AdminSales() {
         ))}
       </div>
 
+      {sales && pendingOnly && (
+        <p className="muted small">
+          {dateFmt.format(range.from!)} al {dateFmt.format(new Date(range.to!.getTime() - 1))} · solo ventas aún sin cuadrar.
+          {closedCount > 0 && ` ${closedCount} ${closedCount === 1 ? 'venta de esta semana ya se cerró' : 'ventas de esta semana ya se cerraron'} en la cuadratura.`}
+        </p>
+      )}
+
       <div className="admin-stats sales-stats">
         <div>
           <span>Ingresos</span>
@@ -273,7 +284,7 @@ export default function AdminSales() {
         ) : list.length === 0 ? (
           <div className="empty">
             <Icon name="receipt" size={36} />
-            <p className="muted">No hay ventas en este período.</p>
+            <p className="muted">{pendingOnly ? (closedCount > 0 ? 'Semana cerrada: aún no hay ventas nuevas.' : 'Aún no hay ventas esta semana.') : 'No hay ventas en este período.'}</p>
           </div>
         ) : (
           <div className="sales-table" role="table" aria-label="Historial de ventas">

@@ -8,9 +8,11 @@
 
 import type { Sale } from '../api/sales'
 
-export type PeriodKey = 'month' | 'lastMonth' | 'days30' | 'year' | 'all'
+export type PeriodKey = 'week' | 'lastWeek' | 'month' | 'lastMonth' | 'days30' | 'year' | 'all'
 
 export const PERIODS: { key: PeriodKey; label: string }[] = [
+  { key: 'week', label: 'Semana en curso' },
+  { key: 'lastWeek', label: 'Semana anterior' },
   { key: 'month', label: 'Este mes' },
   { key: 'lastMonth', label: 'Mes anterior' },
   { key: 'days30', label: 'Últimos 30 días' },
@@ -18,11 +20,31 @@ export const PERIODS: { key: PeriodKey; label: string }[] = [
   { key: 'all', label: 'Todo' },
 ]
 
-/** Rango [from, to) en hora local. */
+/**
+ * La semana en curso solo muestra las ventas aún no cerradas en una cuadratura:
+ * al cerrar la semana sus contadores vuelven a 0.
+ */
+export const PENDING_ONLY: Partial<Record<PeriodKey, boolean>> = { week: true }
+
+/** Lunes 00:00 (hora local) de la semana de `now`. */
+export function weekStart(now = new Date()): Date {
+  const offset = (now.getDay() + 6) % 7 // lunes = 0 … domingo = 6
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset)
+}
+
+/** Rango [from, to) en hora local. Las semanas van de lunes a domingo. */
 export function periodRange(key: PeriodKey, now = new Date()): { from?: Date; to?: Date } {
   const y = now.getFullYear()
   const m = now.getMonth()
   switch (key) {
+    case 'week': {
+      const from = weekStart(now)
+      return { from, to: new Date(from.getFullYear(), from.getMonth(), from.getDate() + 7) }
+    }
+    case 'lastWeek': {
+      const to = weekStart(now)
+      return { from: new Date(to.getFullYear(), to.getMonth(), to.getDate() - 7), to }
+    }
     case 'month':
       return { from: new Date(y, m, 1), to: new Date(y, m + 1, 1) }
     case 'lastMonth':
