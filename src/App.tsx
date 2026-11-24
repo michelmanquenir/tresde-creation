@@ -21,6 +21,7 @@ import AdminAccessories from './admin/AdminAccessories'
 import AdminUsers from './admin/AdminUsers'
 import AdminCategories from './admin/AdminCategories'
 import AdminClosings from './admin/AdminClosings'
+import AdminDeliveries from './admin/AdminDeliveries'
 import AdminProducts from './admin/AdminProducts'
 import AdminProductForm from './admin/AdminProductForm'
 import AdminLogin from './admin/AdminLogin'
@@ -96,6 +97,7 @@ export default function App() {
                 element={<KeyedById>{(id) => <AdminProductForm key={id} />}</KeyedById>}
               />
               <Route path="ventas" element={<AdminSales />} />
+              <Route path="entregas" element={<AdminDeliveries />} />
               <Route path="accesorios" element={<AdminAccessories />} />
               <Route path="categorias" element={<AdminCategories />} />
               <Route path="configuracion" element={<RequireAuth adminOnly><AdminSettings /></RequireAuth>} />

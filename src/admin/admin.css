@@ -424,3 +424,36 @@
 @media (max-width: 720px) {
   .closing-split { grid-template-columns: 1fr; }
 }
+
+/* ───────── Entregas de inventario ───────── */
+.menu-badge { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #c0392b; color: #fff; font-size: .72rem; font-weight: 700; display: inline-grid; place-items: center; line-height: 1; }
+.delivery-tabs .menu-badge { margin-left: 6px; }
+.delivery-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.delivery-toolbar select { margin-left: auto; }
+.delivery-form { margin-bottom: 16px; }
+.delivery-lines { display: grid; gap: 8px; }
+.delivery-line { display: grid; grid-template-columns: minmax(0, 1fr) 96px auto; gap: 8px; align-items: center; }
+.delivery-line select, .delivery-line input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink); font: inherit; }
+.delivery-line select:focus, .delivery-line input:focus { outline: none; border-color: var(--ink); }
+.delivery-form .color-add { width: fit-content; margin-top: 4px; }
+.delivery-form-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.delivery-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.delivery-card.is-mine { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.delivery-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.delivery-head > div { display: grid; gap: 2px; min-width: 0; }
+.delivery-head strong { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.delivery-items { list-style: none; margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); display: grid; gap: 4px; font-size: .92rem; }
+.delivery-timeline { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 2px solid var(--line); display: grid; gap: 10px; }
+.delivery-timeline li { position: relative; display: grid; gap: 2px; }
+.delivery-timeline li::before { content: ''; position: absolute; left: -20px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+.delivery-timeline li.is-comment::before { background: var(--surface); border: 2px solid var(--line); }
+.delivery-timeline p { margin: 0; font-size: .92rem; overflow-wrap: anywhere; }
+.delivery-reply { display: grid; gap: 8px; }
+.delivery-reply textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink); font: inherit; resize: vertical; }
+.delivery-reply textarea:focus { outline: none; border-color: var(--ink); }
+.delivery-reply p { margin: 0; }
+.delivery-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+@media (max-width: 560px) {
+  .delivery-line { grid-template-columns: minmax(0, 1fr) 72px auto; }
+  .delivery-toolbar select { margin-left: 0; width: 100%; }
+}

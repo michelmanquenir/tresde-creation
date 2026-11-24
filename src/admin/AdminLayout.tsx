@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { STORE_NAME } from '../data/catalog'
 import { useAuth } from '../context/AuthContext'
+import { DELIVERIES_CHANGED_EVENT, deliveriesApi } from '../api/deliveries'
 import { ROLE_LABEL } from '../auth/authService'
 import Icon from '../components/Icon'
 import ThemePicker from '../components/ThemePicker'
@@ -19,6 +20,7 @@ const MENU = [
   },
   { to: '/admin/productos/nuevo', label: 'Nuevo producto', icon: 'plus', isActive: (p: string) => p === '/admin/productos/nuevo' },
   { to: '/admin/ventas', label: 'Ventas', icon: 'chart', isActive: (p: string) => p === '/admin/ventas' },
+  { to: '/admin/entregas', label: 'Entregas', icon: 'truck', isActive: (p: string) => p === '/admin/entregas' },
   { to: '/admin/cuadratura', label: 'Cuadratura', icon: 'wallet', isActive: (p: string) => p === '/admin/cuadratura', adminOnly: true },
   { to: '/admin/categorias', label: 'Categorías', icon: 'layers', isActive: (p: string) => p === '/admin/categorias' },
   { to: '/admin/accesorios', label: 'Accesorios', icon: 'key', isActive: (p: string) => p === '/admin/accesorios' },
@@ -31,6 +33,23 @@ export default function AdminLayout() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  // Entregas que esperan que yo las acepte (aviso en el menú)
+  const [pendingDeliveries, setPendingDeliveries] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = () =>
+      deliveriesApi
+        .pendingCount()
+        .then((r) => !cancelled && setPendingDeliveries(r.count))
+        .catch(() => {})
+    load()
+    window.addEventListener(DELIVERIES_CHANGED_EVENT, load)
+    return () => {
+      cancelled = true
+      window.removeEventListener(DELIVERIES_CHANGED_EVENT, load)
+    }
+  }, [pathname])
 
   const onLogout = () => {
     logout()
@@ -76,6 +95,9 @@ export default function AdminLayout() {
               className={() => `admin-menu-link ${item.isActive(pathname) ? 'active' : ''}`}
             >
               <Icon name={item.icon} size={19} /> {item.label}
+              {item.to === '/admin/entregas' && pendingDeliveries > 0 && (
+                <span className="menu-badge" aria-label={`${pendingDeliveries} por recibir`}>{pendingDeliveries}</span>
+              )}
             </NavLink>
           ))}
 
