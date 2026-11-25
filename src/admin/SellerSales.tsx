@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { formatPrice } from '../data/catalog'
 import { salesApi, type Sale } from '../api/sales'
 import { useAuth } from '../context/AuthContext'
@@ -30,6 +31,9 @@ const revenue = (s: Sale) => s.quantity * s.unitPrice
 export default function SellerSales() {
   const { session } = useAuth()
   const { visibleProducts, status, reload: reloadStore } = useProducts()
+  // ?producto=id: viene del botón "Vender" de Productos
+  const [params, setParams] = useSearchParams()
+  const presetProduct = params.get('producto') ?? undefined
   const [period, setPeriod] = useState<Period>('today')
   const [sales, setSales] = useState<Sale[] | null>(null)
   const [formOpen, setFormOpen] = useState(true)
@@ -60,8 +64,14 @@ export default function SellerSales() {
     setNotice(`Venta registrada: ${sale.quantity} × ${sale.productName} por ${formatPrice(revenue(sale))}.`)
     setSales((prev) => [sale, ...(prev ?? [])])
     setFormKey((k) => k + 1) // formulario limpio para la siguiente venta
+    if (presetProduct) setParams({}, { replace: true })
     reloadStore() // actualiza el stock que se muestra
   }
+
+  // Si se pide otro producto desde "Vender", el formulario se abre con ese producto
+  useEffect(() => {
+    if (presetProduct) setFormOpen(true)
+  }, [presetProduct])
 
   const list = sales ?? []
   const total = list.reduce((sum, s) => sum + revenue(s), 0)
@@ -89,12 +99,16 @@ export default function SellerSales() {
           <p className="muted small">Cargando productos…</p>
         ) : (
           <SaleForm
-            key={formKey}
+            key={`${formKey}-${presetProduct ?? ''}`}
             seller
             products={products}
             settings={null}
+            initialProductId={presetProduct}
             onSaved={onSaved}
-            onCancel={() => setFormOpen(false)}
+            onCancel={() => {
+              setFormOpen(false)
+              if (presetProduct) setParams({}, { replace: true })
+            }}
           />
         ))}
 

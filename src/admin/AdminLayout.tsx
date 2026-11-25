@@ -12,6 +12,7 @@ import './admin.css'
 // adminOnly: solo lo ve el administrador (los trabajadores no).
 // seller: lo ve también el vendedor (que solo ve estas opciones).
 const SELLER_HOME = '/admin/ventas'
+const SELLER_PATHS = ['/admin/ventas', '/admin/productos']
 const MENU = [
   { to: '/admin', label: 'Inicio', icon: 'home', isActive: (p: string) => p === '/admin' },
   {
@@ -19,6 +20,7 @@ const MENU = [
     label: 'Productos',
     icon: 'layers',
     isActive: (p: string) => p.startsWith('/admin/productos') && p !== '/admin/productos/nuevo',
+    seller: true,
   },
   { to: '/admin/productos/nuevo', label: 'Nuevo producto', icon: 'plus', isActive: (p: string) => p === '/admin/productos/nuevo' },
   { to: '/admin/ventas', label: 'Ventas', icon: 'chart', isActive: (p: string) => p === '/admin/ventas', seller: true },
@@ -60,8 +62,8 @@ export default function AdminLayout() {
     navigate('/admin/login', { replace: true })
   }
 
-  // El vendedor solo puede estar en Ventas: cualquier otra sección del panel lo devuelve ahí
-  if (seller && pathname !== SELLER_HOME) return <Navigate to={SELLER_HOME} replace />
+  // El vendedor solo puede estar en Ventas y Productos (lista): cualquier otra sección lo devuelve a Ventas
+  if (seller && !SELLER_PATHS.includes(pathname)) return <Navigate to={SELLER_HOME} replace />
 
   const logo = (
     <Link to={seller ? SELLER_HOME : '/admin'} className="logo">

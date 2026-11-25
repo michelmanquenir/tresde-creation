@@ -23,6 +23,7 @@ import AdminCategories from './admin/AdminCategories'
 import AdminClosings from './admin/AdminClosings'
 import AdminDeliveries from './admin/AdminDeliveries'
 import SellerSales from './admin/SellerSales'
+import SellerProducts from './admin/SellerProducts'
 import { isSeller } from './auth/authService'
 import { useAuth } from './context/AuthContext'
 import AdminProducts from './admin/AdminProducts'
@@ -50,6 +51,12 @@ function KeyedById({ children }: { children: (id?: string) => ReactNode }) {
 function SalesPage() {
   const { session } = useAuth()
   return isSeller(session?.role) ? <SellerSales /> : <AdminSales />
+}
+
+// El vendedor ve los productos publicados sin costos ni edición, con botón para vender
+function ProductsPage() {
+  const { session } = useAuth()
+  return isSeller(session?.role) ? <SellerProducts /> : <AdminProducts />
 }
 
 // Diseño de la tienda pública
@@ -99,7 +106,7 @@ export default function App() {
               }
             >
               <Route index element={<AdminDashboard />} />
-              <Route path="productos" element={<AdminProducts />} />
+              <Route path="productos" element={<ProductsPage />} />
               <Route path="productos/nuevo" element={<AdminProductForm />} />
               <Route
                 path="productos/:id/editar"
