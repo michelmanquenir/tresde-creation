@@ -15,6 +15,7 @@ const dateFmt = new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short
 const ROLE_HELP: Record<PanelRole, string> = {
   STAFF: 'Productos, stock, ventas y accesorios. No ve Usuarios ni cambia la Configuración.',
   ADMIN: 'Acceso completo, incluido crear usuarios y cambiar la configuración.',
+  SELLER: 'Solo registra ventas a precio de catálogo y ve las suyas. No ve costos, ganancias ni el resto del panel.',
 }
 
 // Usuarios del panel: el administrador crea las cuentas de sus trabajadores (no hay registro público)
@@ -79,7 +80,7 @@ export default function AdminUsers() {
 
   const startEdit = (u: PanelUser) => {
     reset()
-    setEditing({ id: u.id, draft: { name: u.name, role: u.role === 'ADMIN' ? 'ADMIN' : 'STAFF', password: '' }, errors: {} })
+    setEditing({ id: u.id, draft: { name: u.name, role: u.role === 'ADMIN' || u.role === 'SELLER' ? u.role : 'STAFF', password: '' }, errors: {} })
   }
   const patch = (p: Partial<Draft>) => setEditing((ed) => (ed ? { ...ed, draft: { ...ed.draft, ...p } } : ed))
 
@@ -177,6 +178,7 @@ export default function AdminUsers() {
             Rol
             <select value={role} onChange={(e) => setRole(e.target.value as PanelRole)}>
               <option value="STAFF">{ROLE_LABEL.STAFF}</option>
+              <option value="SELLER">{ROLE_LABEL.SELLER}</option>
               <option value="ADMIN">{ROLE_LABEL.ADMIN}</option>
             </select>
           </label>
@@ -209,7 +211,7 @@ export default function AdminUsers() {
                         {u.username} · desde {dateFmt.format(new Date(u.createdAt))}
                       </span>
                     </div>
-                    <span className={`tag ${u.role === 'ADMIN' ? 'tag-admin' : u.role === 'STAFF' ? 'tag-staff' : ''}`}>
+                    <span className={`tag ${u.role === 'ADMIN' ? 'tag-admin' : u.role === 'STAFF' ? 'tag-staff' : u.role === 'SELLER' ? 'tag-seller' : ''}`}>
                       {ROLE_LABEL[u.role] ?? u.role}
                     </span>
                     <div className="user-actions">
@@ -249,6 +251,7 @@ export default function AdminUsers() {
                           title={isSelf(u) ? 'No puedes quitarte el rol de administrador' : undefined}
                         >
                           <option value="STAFF">{ROLE_LABEL.STAFF}</option>
+                          <option value="SELLER">{ROLE_LABEL.SELLER}</option>
                           <option value="ADMIN">{ROLE_LABEL.ADMIN}</option>
                         </select>
                       </label>

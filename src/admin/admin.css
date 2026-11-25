@@ -326,6 +326,7 @@
 /* ───────── Usuarios del panel ───────── */
 .tag-admin { background: var(--ink); color: var(--bg); }
 .tag-staff { background: #e6f0ff; color: #1f4f9a; }
+.tag-seller { background: #fff1e0; color: #9a4f00; }
 .user-new { margin-bottom: 16px; }
 .user-new .legend { margin: 0; }
 .user-new-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start; }
@@ -457,3 +458,6 @@
   .delivery-line { grid-template-columns: minmax(0, 1fr) 72px auto; }
   .delivery-toolbar select { margin-left: 0; width: 100%; }
 }
+
+.seller-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 560px; }
+.seller-sales li > span { display: grid; gap: 2px; min-width: 0; }

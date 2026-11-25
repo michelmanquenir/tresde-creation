@@ -11,7 +11,7 @@ export type PanelUser = {
 }
 
 /** password: obligatoria al crear; al editar, vacía = no se cambia. username solo se usa al crear. */
-export type UserInput = { name: string; username?: string; password?: string; role: 'ADMIN' | 'STAFF' }
+export type UserInput = { name: string; username?: string; password?: string; role: 'ADMIN' | 'STAFF' | 'SELLER' }
 
 export const usersApi = {
   list: () => api<PanelUser[]>('/api/admin/users', { auth: true }),

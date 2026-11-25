@@ -20,6 +20,8 @@ export type Sale = {
   closingId?: number // cuadratura en que se cerró (no viene si está pendiente)
   soldAt: string // ISO
   createdAt: string
+  soldBy?: string // usuario que la registró (no viene en ventas antiguas)
+  soldByName?: string
 }
 
 export type SaleInput = {

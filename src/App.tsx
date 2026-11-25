@@ -22,6 +22,9 @@ import AdminUsers from './admin/AdminUsers'
 import AdminCategories from './admin/AdminCategories'
 import AdminClosings from './admin/AdminClosings'
 import AdminDeliveries from './admin/AdminDeliveries'
+import SellerSales from './admin/SellerSales'
+import { isSeller } from './auth/authService'
+import { useAuth } from './context/AuthContext'
 import AdminProducts from './admin/AdminProducts'
 import AdminProductForm from './admin/AdminProductForm'
 import AdminLogin from './admin/AdminLogin'
@@ -41,6 +44,12 @@ function ScrollToTop() {
 function KeyedById({ children }: { children: (id?: string) => ReactNode }) {
   const { id } = useParams()
   return <>{children(id)}</>
+}
+
+// El vendedor ve su propia pantalla de ventas (sin costos, ganancias ni ventas de otros)
+function SalesPage() {
+  const { session } = useAuth()
+  return isSeller(session?.role) ? <SellerSales /> : <AdminSales />
 }
 
 // Diseño de la tienda pública
@@ -96,7 +105,7 @@ export default function App() {
                 path="productos/:id/editar"
                 element={<KeyedById>{(id) => <AdminProductForm key={id} />}</KeyedById>}
               />
-              <Route path="ventas" element={<AdminSales />} />
+              <Route path="ventas" element={<SalesPage />} />
               <Route path="entregas" element={<AdminDeliveries />} />
               <Route path="accesorios" element={<AdminAccessories />} />
               <Route path="categorias" element={<AdminCategories />} />

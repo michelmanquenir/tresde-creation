@@ -7,6 +7,8 @@ import { computeCost, formatCost, saleSummary, type CostSettings } from '../util
 type Props = {
   products: Product[]
   settings: CostSettings | null
+  /** Vendedor: precio de catálogo fijo, fecha de hoy y sin costos ni ganancia. */
+  seller?: boolean
   initialProductId?: string
   onSaved: (sale: Sale) => void
   onCancel: () => void
@@ -25,7 +27,8 @@ const toSoldAt = (value: string) => {
 }
 
 // Formulario para registrar una venta hecha fuera de la web (o confirmar una de la web)
-export default function SaleForm({ products, settings, initialProductId, onSaved, onCancel }: Props) {
+export default function SaleForm({ products, settings: rawSettings, seller = false, initialProductId, onSaved, onCancel }: Props) {
+  const settings = seller ? null : rawSettings
   const initial = products.find((p) => p.id === initialProductId)
   const [productId, setProductId] = useState(initial?.id ?? '')
   const [color, setColor] = useState(initial?.colors[0] ?? '')
@@ -74,11 +77,11 @@ export default function SaleForm({ products, settings, initialProductId, onSaved
         productId,
         color: color || undefined,
         quantity: qty,
-        unitPrice: price,
+        unitPrice: seller ? undefined : price,
         channel,
         customer: customer.trim() || undefined,
         note: note.trim() || undefined,
-        soldAt: toSoldAt(date),
+        soldAt: seller ? undefined : toSoldAt(date),
       })
       onSaved(saved)
     } catch (err) {
@@ -138,18 +141,27 @@ export default function SaleForm({ products, settings, initialProductId, onSaved
               <input type="number" min={1} step={1} inputMode="numeric" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
               {errors.quantity && <span className="field-error">{errors.quantity}</span>}
             </label>
-            <label className="field">
-              <span>Precio unitario * <span className="muted small">(con descuento, si hubo)</span></span>
-              <input type="number" min={0} step={10} inputMode="numeric" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
-              {errors.unitPrice && <span className="field-error">{errors.unitPrice}</span>}
-            </label>
+            {seller ? (
+              <label className="field">
+                Precio unitario
+                <input value={product ? formatPrice(product.price) : ''} readOnly disabled placeholder="Precio de catálogo" />
+              </label>
+            ) : (
+              <label className="field">
+                <span>Precio unitario * <span className="muted small">(con descuento, si hubo)</span></span>
+                <input type="number" min={0} step={10} inputMode="numeric" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
+                {errors.unitPrice && <span className="field-error">{errors.unitPrice}</span>}
+              </label>
+            )}
           </div>
 
           <div className="field-row">
-            <label className="field">
-              Fecha
-              <input type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value)} />
-            </label>
+            {!seller && (
+              <label className="field">
+                Fecha
+                <input type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value)} />
+              </label>
+            )}
             <label className="field">
               Canal
               <select value={channel} onChange={(e) => setChannel(e.target.value)}>
@@ -172,7 +184,9 @@ export default function SaleForm({ products, settings, initialProductId, onSaved
           {product && (
             <p className={`stock-msg ${product.stock === 0 ? 'is-out' : ''}`}>
               {product.stock === 0
-                ? 'Este producto no tiene stock. Si imprimiste más unidades, súmalas al stock antes de registrar la venta.'
+                ? seller
+                  ? 'Este producto no tiene stock. Avísale al administrador antes de venderlo.'
+                  : 'Este producto no tiene stock. Si imprimiste más unidades, súmalas al stock antes de registrar la venta.'
                 : `Stock: ${product.stock} → ${Math.max(0, product.stock - qty)} después de esta venta`}
             </p>
           )}
@@ -191,7 +205,7 @@ export default function SaleForm({ products, settings, initialProductId, onSaved
                 </div>
               </>
             ) : (
-              product && <p className="muted small">Este producto no tiene costos cargados: la venta se registra, pero sin ganancia calculada.</p>
+              product && !seller && <p className="muted small">Este producto no tiene costos cargados: la venta se registra, pero sin ganancia calculada.</p>
             )}
           </dl>
           <button type="submit" className="btn btn-primary btn-block" disabled={saving || !product}>

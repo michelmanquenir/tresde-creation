@@ -1,16 +1,19 @@
 // Autenticación contra el backend: POST /api/auth/login devuelve un token JWT.
 // El token se guarda en el navegador y se envía en las peticiones que lo requieren.
-// Las cuentas las crea el administrador en el panel (Usuarios): ADMIN (todo) o STAFF (trabajador).
+// Las cuentas las crea el administrador en el panel (Usuarios): ADMIN (todo), STAFF (trabajador) o SELLER (vendedor).
 // CUSTOMER queda solo para cuentas de clientes antiguas (sin acceso al panel).
 
 import { api } from '../api/client'
 
-export type Role = 'ADMIN' | 'STAFF' | 'CUSTOMER'
+export type Role = 'ADMIN' | 'STAFF' | 'SELLER' | 'CUSTOMER'
 
-/** Administradores y trabajadores entran al panel. */
-export const canUsePanel = (role?: Role | null) => role === 'ADMIN' || role === 'STAFF'
+/** Administradores, trabajadores y vendedores entran al panel (el vendedor, solo a Ventas). */
+export const canUsePanel = (role?: Role | null) => role === 'ADMIN' || role === 'STAFF' || role === 'SELLER'
 
-export const ROLE_LABEL: Record<Role, string> = { ADMIN: 'Administrador', STAFF: 'Trabajador', CUSTOMER: 'Cliente' }
+/** Vendedor: solo registra ventas y ve las suyas, sin costos ni ganancias. */
+export const isSeller = (role?: Role | null) => role === 'SELLER'
+
+export const ROLE_LABEL: Record<Role, string> = { ADMIN: 'Administrador', STAFF: 'Trabajador', SELLER: 'Vendedor', CUSTOMER: 'Cliente' }
 
 export type Session = {
   username: string // en los clientes es su correo

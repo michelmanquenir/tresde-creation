@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { STORE_NAME } from '../data/catalog'
 import { useAuth } from '../context/AuthContext'
 import { DELIVERIES_CHANGED_EVENT, deliveriesApi } from '../api/deliveries'
-import { ROLE_LABEL } from '../auth/authService'
+import { ROLE_LABEL, isSeller } from '../auth/authService'
 import Icon from '../components/Icon'
 import ThemePicker from '../components/ThemePicker'
 import './admin.css'
 
 // Menú del panel. "Productos" queda activo también al editar un producto.
 // adminOnly: solo lo ve el administrador (los trabajadores no).
+// seller: lo ve también el vendedor (que solo ve estas opciones).
+const SELLER_HOME = '/admin/ventas'
 const MENU = [
   { to: '/admin', label: 'Inicio', icon: 'home', isActive: (p: string) => p === '/admin' },
   {
@@ -19,7 +21,7 @@ const MENU = [
     isActive: (p: string) => p.startsWith('/admin/productos') && p !== '/admin/productos/nuevo',
   },
   { to: '/admin/productos/nuevo', label: 'Nuevo producto', icon: 'plus', isActive: (p: string) => p === '/admin/productos/nuevo' },
-  { to: '/admin/ventas', label: 'Ventas', icon: 'chart', isActive: (p: string) => p === '/admin/ventas' },
+  { to: '/admin/ventas', label: 'Ventas', icon: 'chart', isActive: (p: string) => p === '/admin/ventas', seller: true },
   { to: '/admin/entregas', label: 'Entregas', icon: 'truck', isActive: (p: string) => p === '/admin/entregas' },
   { to: '/admin/cuadratura', label: 'Cuadratura', icon: 'wallet', isActive: (p: string) => p === '/admin/cuadratura', adminOnly: true },
   { to: '/admin/categorias', label: 'Categorías', icon: 'layers', isActive: (p: string) => p === '/admin/categorias' },
@@ -35,8 +37,10 @@ export default function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   // Entregas que esperan que yo las acepte (aviso en el menú)
   const [pendingDeliveries, setPendingDeliveries] = useState(0)
+  const seller = isSeller(session?.role)
 
   useEffect(() => {
+    if (seller) return // el vendedor no usa entregas
     let cancelled = false
     const load = () =>
       deliveriesApi
@@ -49,15 +53,18 @@ export default function AdminLayout() {
       cancelled = true
       window.removeEventListener(DELIVERIES_CHANGED_EVENT, load)
     }
-  }, [pathname])
+  }, [pathname, seller])
 
   const onLogout = () => {
     logout()
     navigate('/admin/login', { replace: true })
   }
 
+  // El vendedor solo puede estar en Ventas: cualquier otra sección del panel lo devuelve ahí
+  if (seller && pathname !== SELLER_HOME) return <Navigate to={SELLER_HOME} replace />
+
   const logo = (
-    <Link to="/admin" className="logo">
+    <Link to={seller ? SELLER_HOME : '/admin'} className="logo">
       <span className="logo-mark" aria-hidden="true"><i /><i /><i /></span>
       {STORE_NAME} <span className="admin-pill">Panel</span>
     </Link>
@@ -87,7 +94,9 @@ export default function AdminLayout() {
         {/* En móvil, el menú se cierra al elegir una opción */}
         <nav className="admin-menu" onClick={(e) => (e.target as Element).closest('a') && setMenuOpen(false)}>
           <p className="admin-menu-label">Gestión</p>
-          {MENU.filter((item) => !('adminOnly' in item) || session?.role === 'ADMIN').map((item) => (
+          {MENU.filter((item) =>
+            seller ? 'seller' in item : !('adminOnly' in item) || session?.role === 'ADMIN',
+          ).map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

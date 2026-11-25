@@ -309,8 +309,10 @@ export default function AdminSales() {
                     <span>
                       <strong>{s.quantity} × </strong>
                       {s.productId ? <Link to={`/admin/productos/${s.productId}/editar`}>{s.productName}</Link> : s.productName}
-                      {(s.customer || s.note) && (
-                        <span className="muted small sales-meta">{[s.customer, s.note].filter(Boolean).join(' · ')}</span>
+                      {(s.customer || s.note || s.soldByName) && (
+                        <span className="muted small sales-meta">
+                          {[s.customer, s.note, s.soldByName && `vendió ${s.soldByName}`].filter(Boolean).join(' · ')}
+                        </span>
                       )}
                     </span>
                   </span>
