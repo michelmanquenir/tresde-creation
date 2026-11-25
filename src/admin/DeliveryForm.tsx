@@ -8,6 +8,8 @@ import Icon from '../components/Icon'
 type Props = {
   products: Product[]
   recipients: Recipient[]
+  /** Producto ya elegido en la primera línea (ej. recién creado). */
+  initialProductId?: string
   onSaved: (delivery: Delivery) => void
   onCancel: () => void
 }
@@ -30,11 +32,13 @@ let nextKey = 1
 const newLine = (): Line => ({ key: nextKey++, productId: '', quantity: '1' })
 
 // Formulario para registrar una entrega de inventario (uno o varios productos)
-export default function DeliveryForm({ products, recipients, onSaved, onCancel }: Props) {
+export default function DeliveryForm({ products, recipients, initialProductId, onSaved, onCancel }: Props) {
   const [recipient, setRecipient] = useState(recipients.length === 1 ? recipients[0].username : '')
   const [date, setDate] = useState(today)
   const [note, setNote] = useState('')
-  const [lines, setLines] = useState<Line[]>(() => [newLine()])
+  const [lines, setLines] = useState<Line[]>(() => [
+    { ...newLine(), productId: products.some((p) => p.id === initialProductId) ? initialProductId! : '' },
+  ])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)

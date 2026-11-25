@@ -194,7 +194,6 @@ function ProductForm({ existing }: { existing?: Product }) {
     material: form.material,
     heightCm: num(form.heightCm),
     printHours: num(form.printHours),
-    stock: Number(form.stock) || 0,
     colors: form.colors,
     images: form.images,
     isNew: form.isNew,
@@ -217,8 +216,6 @@ function ProductForm({ existing }: { existing?: Product }) {
       e.oldPrice = 'El precio anterior debe ser mayor al precio de oferta.'
     if (!form.description.trim()) e.description = 'Agrega una descripción.'
     if (!form.colors.length) e.colors = 'Agrega al menos un color.'
-    if (form.stock.trim() === '' || !Number.isInteger(Number(form.stock)) || Number(form.stock) < 0)
-      e.stock = 'Indica cuántas unidades tienes (0 si está agotado).'
     if (form.batchPieces && !(Number(form.batchPieces) >= 1)) e['cost.batchPieces'] = 'Al menos 1 pieza por lote.'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -233,7 +230,8 @@ function ProductForm({ existing }: { existing?: Product }) {
       const input = toInput()
       const saved = existing ? await adminApi.update(existing.id, input) : await adminApi.create(input)
       reloadStore()
-      navigate('/admin/productos', { state: { saved: saved.name } })
+      // Si es nuevo, la lista ofrece entregar sus unidades (así entran al stock)
+      navigate('/admin/productos', { state: { saved: saved.name, createdId: existing ? undefined : saved.id } })
     } catch (err) {
       if (err instanceof ApiError) {
         setErrors(err.fieldErrors) // errores por campo que devuelve el backend
@@ -260,6 +258,7 @@ function ProductForm({ existing }: { existing?: Product }) {
     category: form.categories[0] ?? '',
     name: form.name || 'Nombre del producto',
     rating: existing?.rating,
+    stock: existing?.stock ?? 0,
   }
 
   return (
@@ -470,11 +469,23 @@ function ProductForm({ existing }: { existing?: Product }) {
                 <input type="number" min={0} step={10} inputMode="numeric" value={form.price} onChange={(e) => set('price', e.target.value)} placeholder="Ej: 1000" />
                 {errors.price && <span className="field-error">{errors.price}</span>}
               </label>
-              <label className="field">
-                Stock *
-                <input type="number" min={0} step={1} inputMode="numeric" value={form.stock} onChange={(e) => set('stock', e.target.value)} placeholder="Ej: 5" />
-                {errors.stock && <span className="field-error">{errors.stock}</span>}
-              </label>
+              <div className="field">
+                Stock
+                {existing ? (
+                  <>
+                    <input value={`${existing.stock ?? 0} unidades`} readOnly disabled />
+                    <span className="muted small">
+                      Cambia con entregas aceptadas y ventas.{' '}
+                      <Link to={`/admin/entregas?producto=${encodeURIComponent(existing.id)}`}>Entregar unidades</Link>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <input value="0 unidades" readOnly disabled />
+                    <span className="muted small">Parte en 0. Después de crearlo, entrega las unidades impresas y se suman al aceptarlas.</span>
+                  </>
+                )}
+              </div>
             </div>
 
             {costSettings && cost && (

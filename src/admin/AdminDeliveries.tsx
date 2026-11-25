@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import type { Product } from '../data/catalog'
 import { adminApi } from '../api/products'
 import {
@@ -35,12 +36,15 @@ export default function AdminDeliveries() {
   const isAdmin = session?.role === 'ADMIN'
   const { reload: reloadStore } = useProducts()
 
+  // ?producto=id: viene de "Entregar unidades" (producto recién creado o desde la lista)
+  const [params, setParams] = useSearchParams()
+  const presetProduct = params.get('producto') ?? undefined
   const [list, setList] = useState<Delivery[] | null>(null)
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<Product[] | null>(null)
   const [recipients, setRecipients] = useState<Recipient[]>([])
   const [tab, setTab] = useState<Tab | null>(null)
   const [filter, setFilter] = useState<DeliveryStatus | 'ALL'>('ALL')
-  const [formOpen, setFormOpen] = useState(false)
+  const [formOpen, setFormOpen] = useState(!!presetProduct)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
@@ -53,14 +57,22 @@ export default function AdminDeliveries() {
         setTab((t) => t ?? (l.some((d) => d.status === 'PENDING' && same(d.recipientUsername, me)) ? 'inbox' : 'all'))
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'No se pudieron cargar las entregas.'))
-    adminApi.list().then((p) => setProducts([...p].sort((a, b) => a.name.localeCompare(b.name, 'es')))).catch(() => {})
+    adminApi
+      .list()
+      .then((p) => setProducts([...p].sort((a, b) => a.name.localeCompare(b.name, 'es'))))
+      .catch(() => setProducts([]))
     deliveriesApi.recipients().then(setRecipients).catch(() => {})
   }, [me])
 
   const replace = (d: Delivery) => setList((prev) => (prev ?? []).map((x) => (x.id === d.id ? d : x)))
 
-  const onCreated = (d: Delivery) => {
+  const closeForm = () => {
     setFormOpen(false)
+    if (presetProduct) setParams({}, { replace: true })
+  }
+
+  const onCreated = (d: Delivery) => {
+    closeForm()
     setList((prev) => [d, ...(prev ?? [])].sort((a, b) => b.deliveredAt.localeCompare(a.deliveredAt) || b.id - a.id))
     setTab('sent')
     setFilter('ALL')
@@ -103,8 +115,16 @@ export default function AdminDeliveries() {
       {notice && <div className="alert alert-ok">{notice}</div>}
       {error && <div className="alert">{error}</div>}
 
-      {formOpen && (
-        <DeliveryForm products={products} recipients={recipients} onSaved={onCreated} onCancel={() => setFormOpen(false)} />
+      {formOpen && !products && <p className="muted small">Cargando productos…</p>}
+      {formOpen && products && (
+        <DeliveryForm
+          key={presetProduct ?? 'nueva'}
+          products={products}
+          recipients={recipients}
+          initialProductId={presetProduct}
+          onSaved={onCreated}
+          onCancel={closeForm}
+        />
       )}
 
       <div className="admin-toolbar delivery-toolbar">

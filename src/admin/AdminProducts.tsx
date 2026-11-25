@@ -35,7 +35,7 @@ export default function AdminProducts() {
   const location = useLocation()
   const [category, setCategory] = useState(() => new URLSearchParams(location.search).get('categoria') ?? '')
   const [error, setError] = useState('')
-  const saved = (location.state as { saved?: string } | null)?.saved
+  const { saved, createdId } = (location.state as { saved?: string; createdId?: string } | null) ?? {}
   const [notice, setNotice] = useState(saved ? 'saved' : '')
   const fileInput = useRef<HTMLInputElement>(null)
   const costSettings = useCostSettings()
@@ -151,7 +151,20 @@ export default function AdminProducts() {
         <div><strong>{products.filter((p) => !p.stock).length}</strong><span>agotados</span></div>
       </div>
 
-      {notice === 'saved' && saved && !error && <div className="alert alert-ok">Se guardó “{saved}”.</div>}
+      {notice === 'saved' && saved && !error && (
+        <div className="alert alert-ok">
+          {createdId ? (
+            <>
+              Se creó “{saved}” con stock 0.{' '}
+              <Link to={`/admin/entregas?producto=${encodeURIComponent(createdId)}`}>
+                <strong>Entregar las unidades impresas →</strong>
+              </Link>
+            </>
+          ) : (
+            <>Se guardó “{saved}”.</>
+          )}
+        </div>
+      )}
       {notice === 'imported' && !error && <div className="alert alert-ok">Catálogo importado correctamente.</div>}
       {error && <div className="alert">{error}</div>}
 
@@ -232,6 +245,14 @@ export default function AdminProducts() {
                 {p.bestSeller && <span className="tag tag-sale">Top</span>}
               </span>
               <span role="cell" className="admin-actions">
+                <Link
+                  to={`/admin/entregas?producto=${encodeURIComponent(p.id)}`}
+                  className="icon-btn"
+                  title="Entregar unidades"
+                  aria-label={`Entregar unidades de ${p.name}`}
+                >
+                  <Icon name="truck" size={18} />
+                </Link>
                 <button
                   className="icon-btn"
                   disabled={busyId === p.id}

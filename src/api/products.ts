@@ -11,7 +11,9 @@ export type ProductInput = {
   material: Material
   heightCm?: number
   printHours?: number
-  stock: number
+  // El formulario no lo envía: un producto nuevo parte en 0 y editar conserva el stock actual.
+  // El stock cambia con entregas aceptadas, ventas o el ajuste rápido de la lista.
+  stock?: number
   colors: string[]
   images: string[]
   isNew: boolean
