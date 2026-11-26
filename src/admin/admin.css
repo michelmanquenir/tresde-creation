@@ -469,3 +469,7 @@
   .seller-row.admin-row-head { display: none; }
   .seller-row > .admin-product { grid-column: 1 / -1; }
 }
+.seller-payments { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 760px; }
+.pay-chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 0; padding: 0; }
+.sales-seller-filter { height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: .85rem; margin-left: auto; }
+@media (max-width: 560px) { .seller-payments { grid-template-columns: 1fr; } .sales-seller-filter { margin-left: 0; width: 100%; } }

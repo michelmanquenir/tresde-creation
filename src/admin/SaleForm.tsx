@@ -1,12 +1,15 @@
 import { useState, type FormEvent } from 'react'
 import { formatPrice, type Product } from '../data/catalog'
-import { CHANNELS, salesApi, type Sale } from '../api/sales'
+import { CHANNELS, PAYMENT_METHODS, salesApi, type PaymentMethod, type Sale, type SaleSeller } from '../api/sales'
 import { ApiError } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 import { computeCost, formatCost, saleSummary, type CostSettings } from '../utils/pricing'
 
 type Props = {
   products: Product[]
   settings: CostSettings | null
+  /** Para elegir quién hizo la venta (admin y trabajadores). Vacío: queda quien la registra. */
+  sellers?: SaleSeller[]
   /** Vendedor: precio de catálogo fijo, fecha de hoy y sin costos ni ganancia. */
   seller?: boolean
   initialProductId?: string
@@ -27,8 +30,11 @@ const toSoldAt = (value: string) => {
 }
 
 // Formulario para registrar una venta hecha fuera de la web (o confirmar una de la web)
-export default function SaleForm({ products, settings: rawSettings, seller = false, initialProductId, onSaved, onCancel }: Props) {
+export default function SaleForm({ products, settings: rawSettings, seller = false, sellers = [], initialProductId, onSaved, onCancel }: Props) {
   const settings = seller ? null : rawSettings
+  const { session } = useAuth()
+  const [soldBy, setSoldBy] = useState(session?.username ?? '')
+  const [payment, setPayment] = useState<PaymentMethod | ''>('')
   const initial = products.find((p) => p.id === initialProductId)
   const [productId, setProductId] = useState(initial?.id ?? '')
   const [color, setColor] = useState(initial?.colors[0] ?? '')
@@ -67,6 +73,7 @@ export default function SaleForm({ products, settings: rawSettings, seller = fal
     if (qty < 1) errs.quantity = 'La cantidad mínima es 1.'
     if (!(price > 0)) errs.unitPrice = 'El precio debe ser mayor a 0.'
     if (overStock) errs.quantity = `Solo quedan ${product!.stock} en stock.`
+    if (!payment) errs.paymentMethod = 'Elige cómo pagó el cliente.'
     setErrors(errs)
     setError('')
     if (Object.keys(errs).length) return
@@ -82,6 +89,8 @@ export default function SaleForm({ products, settings: rawSettings, seller = fal
         customer: customer.trim() || undefined,
         note: note.trim() || undefined,
         soldAt: seller ? undefined : toSoldAt(date),
+        paymentMethod: payment as PaymentMethod,
+        soldBy: seller ? undefined : soldBy || undefined,
       })
       onSaved(saved)
     } catch (err) {
@@ -168,6 +177,40 @@ export default function SaleForm({ products, settings: rawSettings, seller = fal
                 {CHANNELS.map((c) => <option key={c}>{c}</option>)}
               </select>
             </label>
+          </div>
+
+          <div className="field-row">
+            <div className="field">
+              Método de pago *
+              <div className="chips pay-chips" role="radiogroup" aria-label="Método de pago">
+                {PAYMENT_METHODS.map((m) => (
+                  <button
+                    key={m.key}
+                    type="button"
+                    role="radio"
+                    aria-checked={payment === m.key}
+                    className={`chip sm ${payment === m.key ? 'active' : ''}`}
+                    onClick={() => setPayment(m.key)}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              {errors.paymentMethod && <span className="field-error">{errors.paymentMethod}</span>}
+            </div>
+            {!seller && sellers.length > 0 && (
+              <label className="field">
+                Vendedor
+                <select value={soldBy} onChange={(e) => setSoldBy(e.target.value)}>
+                  {sellers.map((s) => (
+                    <option key={s.username} value={s.username}>
+                      {s.name}{s.username === session?.username ? ' (yo)' : ''}
+                    </option>
+                  ))}
+                </select>
+                {errors.soldBy && <span className="field-error">{errors.soldBy}</span>}
+              </label>
+            )}
           </div>
 
           <div className="field-row">

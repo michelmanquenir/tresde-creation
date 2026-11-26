@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { formatPrice } from '../data/catalog'
-import { salesApi, type Sale } from '../api/sales'
+import { PAYMENT_METHODS, paymentLabel, salesApi, type Sale } from '../api/sales'
 import { useAuth } from '../context/AuthContext'
 import { useProducts } from '../context/ProductsContext'
 import Icon from '../components/Icon'
@@ -133,6 +133,22 @@ export default function SellerSales() {
         </div>
       </div>
 
+      {/* Cuánto juntó con cada método de pago (para rendir la caja) */}
+      {sales && list.length > 0 && (
+        <div className="admin-stats seller-stats seller-payments">
+          {PAYMENT_METHODS.map((m) => {
+            const of = list.filter((s) => s.paymentMethod === m.key)
+            return (
+              <div key={m.key}>
+                <span>{m.label}</span>
+                <strong>{formatPrice(of.reduce((sum, s) => sum + revenue(s), 0))}</strong>
+                <span className="muted small">{of.length} {of.length === 1 ? 'venta' : 'ventas'}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       <section className="panel sales-history">
         <h2 className="legend">Historial</h2>
         {!sales ? (
@@ -149,7 +165,13 @@ export default function SellerSales() {
                 <span>
                   {s.color && <span className="swatch sm" style={{ background: s.color }} />} <strong>{s.quantity} ×</strong> {s.productName}
                   <span className="muted small sales-meta">
-                    {[dateTimeFmt.format(new Date(s.soldAt)), s.channel, s.customer, s.note].filter(Boolean).join(' · ')}
+                    {[
+                      dateTimeFmt.format(new Date(s.soldAt)),
+                      s.paymentMethod && paymentLabel(s.paymentMethod),
+                      s.channel,
+                      s.customer,
+                      s.note,
+                    ].filter(Boolean).join(' · ')}
                   </span>
                 </span>
                 <strong>{formatPrice(revenue(s))}</strong>

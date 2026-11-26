@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { formatPrice, type Product } from '../data/catalog'
 import { adminApi } from '../api/products'
-import { salesApi, type Sale } from '../api/sales'
+import { paymentLabel, salesApi, type Sale, type SaleSeller } from '../api/sales'
 import { useCostSettings } from '../api/settings'
 import { useProducts } from '../context/ProductsContext'
 import { formatCost } from '../utils/pricing'
@@ -11,6 +11,7 @@ import {
   PERIODS,
   buckets,
   byChannel,
+  groupRevenue,
   periodRange,
   saleCost,
   saleCostParts,
@@ -39,6 +40,12 @@ export default function AdminSales() {
   const [busyId, setBusyId] = useState<number | null>(null)
   const settings = useCostSettings()
   const { reload: reloadStore } = useProducts()
+  const [sellers, setSellers] = useState<SaleSeller[]>([])
+  const [sellerFilter, setSellerFilter] = useState('') // '' = todos
+
+  useEffect(() => {
+    salesApi.sellers().then(setSellers).catch(() => {})
+  }, [])
 
   const range = useMemo(() => periodRange(period), [period])
 
@@ -60,8 +67,18 @@ export default function AdminSales() {
 
   const pendingOnly = !!PENDING_ONLY[period]
   // En la semana en curso las ventas ya cuadradas no cuentan: al cerrar la semana todo vuelve a 0.
-  const list = useMemo(() => (sales ?? []).filter((s) => !pendingOnly || !s.closingId), [sales, pendingOnly])
-  const closedCount = (sales?.length ?? 0) - list.length
+  const periodList = useMemo(() => (sales ?? []).filter((s) => !pendingOnly || !s.closingId), [sales, pendingOnly])
+  const closedCount = (sales?.length ?? 0) - periodList.length
+  // Filtro por vendedor ('-' = ventas antiguas sin vendedor)
+  const list = useMemo(
+    () =>
+      !sellerFilter
+        ? periodList
+        : periodList.filter((s) => (sellerFilter === '-' ? !s.soldBy : s.soldBy?.toLowerCase() === sellerFilter.toLowerCase())),
+    [periodList, sellerFilter],
+  )
+  const payments = groupRevenue(list, (s) => paymentLabel(s.paymentMethod))
+  const bySeller = groupRevenue(list, (s) => s.soldByName ?? 'Sin vendedor')
   const t = totals(list)
   const chart = buckets(list, range.from, range.to)
   const maxRevenue = Math.max(1, ...chart.items.map((b) => b.revenue))
@@ -107,7 +124,7 @@ export default function AdminSales() {
   }
 
   const onExport = () => {
-    const head = ['Fecha', 'Producto', 'Color', 'Cantidad', 'Precio unitario', 'Total', 'Materia prima unitaria', 'Filamento', 'Accesorios', 'Materia prima total', '% máquina', 'Ganancia', 'Canal', 'Cliente', 'Nota']
+    const head = ['Fecha', 'Producto', 'Color', 'Cantidad', 'Precio unitario', 'Total', 'Materia prima unitaria', 'Filamento', 'Accesorios', 'Materia prima total', '% máquina', 'Ganancia', 'Canal', 'Método de pago', 'Vendedor', 'Cliente', 'Nota']
     const rows = list.map((s) => {
       const profit = saleProfit(s)
       const parts = saleCostParts(s)
@@ -126,6 +143,8 @@ export default function AdminSales() {
         s.reservePercent,
         profit === null ? '' : Math.round(profit),
         s.channel ?? '',
+        s.paymentMethod ? paymentLabel(s.paymentMethod) : '',
+        s.soldByName ?? '',
         s.customer ?? '',
         s.note ?? '',
       ]
@@ -161,6 +180,7 @@ export default function AdminSales() {
           key={presetProduct ?? 'nueva'}
           products={products}
           settings={settings}
+          sellers={sellers}
           initialProductId={presetProduct}
           onSaved={onSaved}
           onCancel={closeForm}
@@ -173,6 +193,13 @@ export default function AdminSales() {
             {p.label}
           </button>
         ))}
+        {sellers.length > 1 && (
+          <select className="sales-seller-filter" value={sellerFilter} onChange={(e) => setSellerFilter(e.target.value)} aria-label="Filtrar por vendedor">
+            <option value="">Todos los vendedores</option>
+            {sellers.map((s) => <option key={s.username} value={s.username}>{s.name}</option>)}
+            <option value="-">Sin vendedor (ventas antiguas)</option>
+          </select>
+        )}
       </div>
 
       {sales && pendingOnly && (
@@ -253,6 +280,28 @@ export default function AdminSales() {
                 </li>
               ))}
             </ul>
+            <h2 className="legend sales-sub">Por método de pago</h2>
+            <ul className="dash-list">
+              {payments.map((p) => (
+                <li key={p.key}>
+                  <span>{p.key} <span className="muted small">({p.count})</span></span>
+                  <strong>{formatPrice(p.revenue)}</strong>
+                </li>
+              ))}
+            </ul>
+            {!sellerFilter && bySeller.length > 1 && (
+              <>
+                <h2 className="legend sales-sub">Por vendedor</h2>
+                <ul className="dash-list">
+                  {bySeller.map((p) => (
+                    <li key={p.key}>
+                      <span>{p.key} <span className="muted small">({p.count})</span></span>
+                      <strong>{formatPrice(p.revenue)}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
             {channels.length > 0 && (
               <>
                 <h2 className="legend sales-sub">Por canal</h2>
@@ -294,7 +343,7 @@ export default function AdminSales() {
               <span role="columnheader" className="right">Total</span>
               <span role="columnheader" className="right">Materia prima</span>
               <span role="columnheader" className="right">Ganancia</span>
-              <span role="columnheader">Canal</span>
+              <span role="columnheader">Canal · pago</span>
               <span role="columnheader" />
             </div>
             {list.map((s) => {
@@ -311,7 +360,7 @@ export default function AdminSales() {
                       {s.productId ? <Link to={`/admin/productos/${s.productId}/editar`}>{s.productName}</Link> : s.productName}
                       {(s.customer || s.note || s.soldByName) && (
                         <span className="muted small sales-meta">
-                          {[s.customer, s.note, s.soldByName && `vendió ${s.soldByName}`].filter(Boolean).join(' · ')}
+                          {[s.soldByName && `Vendió ${s.soldByName}`, s.customer, s.note].filter(Boolean).join(' · ')}
                         </span>
                       )}
                     </span>
@@ -342,7 +391,10 @@ export default function AdminSales() {
                   <span role="cell" className={`right ${profit !== null && profit < 0 ? 'is-loss' : ''}`}>
                     {profit === null ? <span className="muted small">Sin costos</span> : formatCost(Math.round(profit))}
                   </span>
-                  <span role="cell" className="small">{s.channel ?? '—'}</span>
+                  <span role="cell" className="small">
+                    {s.channel ?? '—'}
+                    {s.paymentMethod && <span className="muted small sales-meta">{paymentLabel(s.paymentMethod)}</span>}
+                  </span>
                   <span role="cell" className="right">
                     {s.closingId ? (
                       <span className="tag tag-muted" title="Ya está en una cuadratura: para anularla, anula primero esa cuadratura">

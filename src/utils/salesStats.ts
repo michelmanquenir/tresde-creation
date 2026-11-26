@@ -162,6 +162,19 @@ export function topProducts(sales: Sale[], limit = 6): ProductRank[] {
 }
 
 /** Ingreso por canal de venta. */
+/** Ingresos y cantidad de ventas agrupados por una clave (método de pago, vendedor…), de mayor a menor. */
+export function groupRevenue(sales: Sale[], keyOf: (s: Sale) => string): { key: string; revenue: number; count: number }[] {
+  const map = new Map<string, { key: string; revenue: number; count: number }>()
+  for (const s of sales) {
+    const key = keyOf(s)
+    const r = map.get(key) ?? { key, revenue: 0, count: 0 }
+    r.revenue += saleRevenue(s)
+    r.count++
+    map.set(key, r)
+  }
+  return [...map.values()].sort((a, b) => b.revenue - a.revenue)
+}
+
 export function byChannel(sales: Sale[]): { channel: string; revenue: number; count: number }[] {
   const map = new Map<string, { channel: string; revenue: number; count: number }>()
   for (const s of sales) {
